@@ -12,3 +12,4 @@ def gen_routes
 end
 
 gen_routes
+Granite::Api.print_routes
