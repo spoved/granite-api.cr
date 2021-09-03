@@ -45,7 +45,7 @@ module Granite::Api
 
     if %op_item.nil? && %summary.is_a?(String) && %schema.is_a?(Open::Api::Schema)
       %op_item = Open::Api::OperationItem.new(%summary).tap do |op|
-        op.responses = {
+        op.responses = Open::Api::OperationItem::Responses{
           "200" => Open::Api::Response.new(%summary).tap do |resp|
             resp.content = {
               "application/json" => Open::Api::MediaType.new(schema: %schema),
