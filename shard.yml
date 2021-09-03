@@ -16,3 +16,15 @@ dependencies:
     github: spoved/open-api.cr
   kemal:
     github: kemalcr/kemal
+  tablo:
+    github: hutou/tablo
+  spoved:
+    github: spoved/spoved.cr
+
+development_dependencies:
+  sqlite3:
+    github: crystal-lang/crystal-sqlite3
+  mysql:
+    github: crystal-lang/crystal-mysql
+  spec-kemal:
+    github: kemalcr/spec-kemal

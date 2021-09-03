@@ -1,9 +1,8 @@
 require "./spec_helper"
 
 describe Granite::Api do
-  # TODO: Write tests
-
-  it "works" do
-    false.should eq(true)
+  it TestModel do
+    model_def = Granite::Api::ModelDef(TestModel).new("test_model", "test_model")
+    model_def.should be_a Granite::Api::ModelDef(TestModel)
   end
 end

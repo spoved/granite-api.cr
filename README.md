@@ -1,6 +1,6 @@
 # granite-api
 
-TODO: Write a description here
+A framework to generate open-api servers from granite models
 
 ## Installation
 
