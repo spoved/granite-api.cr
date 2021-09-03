@@ -51,12 +51,12 @@ module Granite::Api
               "application/json" => Open::Api::MediaType.new(schema: %schema),
             }
           end,
-          "400"     => OPEN_API.response_ref("400"),
-          "401"     => OPEN_API.response_ref("401"),
-          "403"     => OPEN_API.response_ref("403"),
-          "404"     => OPEN_API.response_ref("404"),
-          "500"     => OPEN_API.response_ref("500"),
-          "default" => OPEN_API.response_ref("default"),
+          "400"     => Granite::Api.open_api.response_ref("400"),
+          "401"     => Granite::Api.open_api.response_ref("401"),
+          "403"     => Granite::Api.open_api.response_ref("403"),
+          "404"     => Granite::Api.open_api.response_ref("404"),
+          "500"     => Granite::Api.open_api.response_ref("500"),
+          "default" => Granite::Api.open_api.response_ref("default"),
         }
       end
     end
