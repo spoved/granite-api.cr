@@ -88,7 +88,7 @@ module Granite::Api
     end
   end
 
-  private def default_response_refs
+  def default_response_refs
     {
       "400"     => OPEN_API.response_ref("400"),
       "401"     => OPEN_API.response_ref("401"),
