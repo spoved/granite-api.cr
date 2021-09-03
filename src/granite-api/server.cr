@@ -1,18 +1,23 @@
 module Granite::Api
-  macro init_server
-    Granite::Api.register_route("OPTIONS", "/*",
-      summary: "CORS Options Return",
-      schema: Open::Api::Schema.new("object",
-        required: ["msg"],
-        properties: Hash(String, Open::Api::SchemaRef){"msg" => Open::Api::Schema.new("string")})
-    )
-    options "/*" do
-      # TODO: what should OPTIONS requests actually respond with?
-      {msg: "ok"}.to_json
+  def init_server(name : String? = nil, host : String? = nil)
+    open_api.info.title = "Mtg Helper API" if name
+
+    if host
+      open_api.servers << Open::Api::Server.new(host)
+    end
+
+    error 404 do |env|
+      Spoved::Kemal.not_found_resp(env, "Nothin here, sorry.")
     end
 
     add_handler Spoved::Kemal::CorsHandler.new
     Kemal.config.logger = Granite::Api::Logger.new
+
+    before_all "/api/*" do |env|
+      env.response.content_type = "application/json"
+    end
+
+    default_routes
   end
 
   def register_schema(_model, model_def)

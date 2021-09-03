@@ -1,4 +1,37 @@
 module Granite::Api
+  private def default_routes
+    get "/api/v1/swagger.json" do |env|
+      env.response.content_type = "application/json"
+      Granite::Api.set_content_length(open_api.to_json, env)
+    end
+
+    Granite::Api.register_route("OPTIONS", "/*",
+      summary: "CORS Options Return",
+      schema: Open::Api::Schema.new("object",
+        required: ["msg"],
+        properties: Hash(String, Open::Api::SchemaRef){"msg" => Open::Api::Schema.new("string")})
+    )
+    options "/*" do
+      # TODO: what should OPTIONS requests actually respond with?
+      {msg: "ok"}.to_json
+    end
+
+    Granite::Api.register_route("GET", "/healthz",
+      summary: "get health",
+      schema: Open::Api::Schema.new(
+        "object",
+        required: ["status"],
+        properties: Hash(String, Open::Api::SchemaRef){
+          "status" => Open::Api::Schema.new("string"),
+        }
+      )
+    )
+    get "/healthz" do |env|
+      env.response.content_type = "application/json"
+      {status: "ok"}.to_json
+    end
+  end
+
   private def register_default_schemas
     SWAGGER_API.register_schema("error", Open::Api::Schema.new(
       schema_type: "object",
