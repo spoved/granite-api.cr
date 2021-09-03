@@ -7,10 +7,10 @@ module Granite::Api
     end
 
     error 404 do |env|
-      Spoved::Kemal.not_found_resp(env, "Nothin here, sorry.")
+      Granite::Api.not_found_resp(env, "Nothin here, sorry.")
     end
 
-    add_handler Spoved::Kemal::CorsHandler.new
+    add_handler Granite::Api::CorsHandler.new
     Kemal.config.logger = Granite::Api::Logger.new
 
     before_all "/api/*" do |env|
