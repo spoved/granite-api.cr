@@ -1,3 +1,5 @@
+require "./generator/*"
+
 module Granite::Api
   # Generates CRUD routes for `Granite` models
   macro crud_routes(_model, api_version = 1)

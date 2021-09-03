@@ -27,7 +27,7 @@ module Granite::Api
     SWAGGER_API
   end
 
-  register_spoved_defaults
+  register_defaults
 
   # Print the registered routes into a table
   def print_routes
