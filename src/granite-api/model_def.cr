@@ -131,7 +131,6 @@ module Granite::Api
       }
 
       %model_def.patch_item = ->(item : {{model.id}}, values : Array(Granite::Api::ParamFilter)){
-        pp values
         values.each do |param|
           case param[:name]
           when "{{primary_key.id}}"

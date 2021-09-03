@@ -1,8 +1,11 @@
-require "spec-kemal"
+ENV["KEMAL_ENV"] = "test"
+
 require "spec"
+require "spec-kemal"
 require "../src/granite-api"
 
-Granite::Connections << Granite::Adapter::Sqlite.new(name: "sqlite", url: "sqlite3://./spec/data.db")
+spoved_logger :trace, bind: true, clear: true
+Granite::Connections << Granite::Adapter::Sqlite.new(name: "sqlite", url: "sqlite3://./spec/files/data.sqlite")
 
 require "../spec/fixtures/*"
 
@@ -12,4 +15,9 @@ def gen_routes
 end
 
 gen_routes
-Granite::Api.print_routes
+
+get "/" do
+  "Hello World!"
+end
+
+Kemal.run

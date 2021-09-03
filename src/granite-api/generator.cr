@@ -146,9 +146,11 @@ module Granite::Api
       values = Granite::Api.param_args(env, %patch_body_params)
       %model_def.patch_item.call(item, values)
 
-      # item = {{model}}.from_json(env.request.body.not_nil!)
-      item.save!
-      Granite::Api.set_content_length(item.to_json, env)
+      if item.save
+        Granite::Api.set_content_length(item.to_json, env)
+      else
+        Granite::Api.resp_400(env, item.errors)
+      end
     rescue ex
       Log.error(exception: ex) {ex.message}
       Granite::Api.resp_400(env, ex.message)
@@ -178,8 +180,11 @@ module Granite::Api
       else
         values = Granite::Api.param_args(env, %patch_body_params)
         %model_def.patch_item.call(item, values)
-        item.save!
-        Granite::Api.set_content_length(item.to_json, env)
+        if item.save
+          Granite::Api.set_content_length(item.to_json, env)
+        else
+          Granite::Api.resp_400(env, item.errors)
+        end
       end
     rescue ex
       Log.error(exception: ex) {ex.message}

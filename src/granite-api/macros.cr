@@ -31,7 +31,7 @@ module Granite::Api
   end
 
   macro register_route(typ, path, model = nil, op_item = nil, summary = nil, schema = nil)
-    Log.debug { "registring route: " + {{path}} }
+    Log.info { "registring route: " + {{path}} }
     Granite::Api::SPOVED_ROUTES << [ {{typ}}, {{path}}, {{model ? model.stringify : ""}} ]
     %summary = {{summary}}
     %schema = {{schema}}

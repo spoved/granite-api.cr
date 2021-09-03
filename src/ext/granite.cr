@@ -35,9 +35,11 @@ class Granite::Base
     column created_at : Int64
     column modified_at : Int64
 
-    before_save :pre_commit
+    before_save :_set_timestamps
 
-    def pre_commit
+    # :nodoc:
+    def _set_timestamps
+      Log.warn { "SETTING TIMES"}
       self.created_at = Time.utc.to_unix if @created_at.nil?
       self.modified_at = Time.utc.to_unix
     end

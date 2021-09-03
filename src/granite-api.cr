@@ -48,4 +48,4 @@ module Granite::Api
   end
 end
 
-require "./granite-api/**"
+require "./granite-api/*"
