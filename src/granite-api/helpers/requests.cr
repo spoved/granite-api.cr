@@ -1,10 +1,10 @@
 module Granite::Api
   def list_req_params
     [
-      SWAGGER_API.parameter_ref("resp_limit"),
-      SWAGGER_API.parameter_ref("resp_offset"),
-      SWAGGER_API.parameter_ref("resp_sort_by"),
-      SWAGGER_API.parameter_ref("resp_sort_order"),
+      OPEN_API.parameter_ref("resp_limit"),
+      OPEN_API.parameter_ref("resp_offset"),
+      OPEN_API.parameter_ref("resp_sort_by"),
+      OPEN_API.parameter_ref("resp_sort_order"),
     ]
   end
 

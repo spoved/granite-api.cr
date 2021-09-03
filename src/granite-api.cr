@@ -12,8 +12,8 @@ require "./ext/*"
 module Granite::Api
   extend self
 
-  SPOVED_ROUTES = Array(Array(String)).new
-  SWAGGER_API   = Open::Api.new
+  ROUTES   = Array(Array(String)).new
+  OPEN_API = Open::Api.new
   # :nodoc:
   DEFAULT_LIMIT = 100
   # :nodoc:
@@ -24,18 +24,18 @@ module Granite::Api
   UUID_OPERATORS = %w(:neq :in :nin)
 
   def open_api : Open::Api
-    SWAGGER_API
+    OPEN_API
   end
 
   register_defaults
 
   # Print the registered routes into a table
   def print_routes
-    resources = Granite::Api::SPOVED_ROUTES.map(&.last).uniq!.sort
+    resources = Granite::Api::ROUTES.map(&.last).uniq!.sort
     resources.each do |resource|
       puts resource
 
-      data = Granite::Api::SPOVED_ROUTES.select(&.last.==(resource))
+      data = Granite::Api::ROUTES.select(&.last.==(resource))
       table = Tablo::Table.new(data, connectors: Tablo::CONNECTORS_SINGLE_DOUBLE) do |t|
         t.add_column("Path", &.[0])
         t.add_column("Route", &.[1])

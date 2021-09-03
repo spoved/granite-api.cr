@@ -33,7 +33,7 @@ module Granite::Api
   end
 
   private def register_default_schemas
-    SWAGGER_API.register_schema("error", Open::Api::Schema.new(
+    OPEN_API.register_schema("error", Open::Api::Schema.new(
       schema_type: "object",
       properties: Hash(String, Open::Api::SchemaRef){
         "code"    => Open::Api::Schema.new("integer", format: "int32"),
@@ -65,13 +65,13 @@ module Granite::Api
         required: false, default_value: nil
       ),
     }.each do |name, param|
-      SWAGGER_API.register_parameter name, param
+      OPEN_API.register_parameter name, param
     end
   end
 
   private def register_default_responses
     error_content = {
-      "application/json" => Open::Api::MediaType.new(SWAGGER_API.schema_ref("error")),
+      "application/json" => Open::Api::MediaType.new(OPEN_API.schema_ref("error")),
     }
     default_responses = {
       "204"     => Open::Api::Response.new(description: "successfully deleted record"),
@@ -84,18 +84,18 @@ module Granite::Api
     }
 
     default_responses.each do |code, response|
-      SWAGGER_API.register_response(code, response)
+      OPEN_API.register_response(code, response)
     end
   end
 
   private def default_response_refs
     {
-      "400"     => SWAGGER_API.response_ref("400"),
-      "401"     => SWAGGER_API.response_ref("401"),
-      "403"     => SWAGGER_API.response_ref("403"),
-      "404"     => SWAGGER_API.response_ref("404"),
-      "500"     => SWAGGER_API.response_ref("500"),
-      "default" => SWAGGER_API.response_ref("default"),
+      "400"     => OPEN_API.response_ref("400"),
+      "401"     => OPEN_API.response_ref("401"),
+      "403"     => OPEN_API.response_ref("403"),
+      "404"     => OPEN_API.response_ref("404"),
+      "500"     => OPEN_API.response_ref("500"),
+      "default" => OPEN_API.response_ref("default"),
     }
   end
 

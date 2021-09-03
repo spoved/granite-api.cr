@@ -83,7 +83,7 @@ module Granite::Api
       op.tags << model_name
       op.parameters.concat params
       op.responses = Open::Api::OperationItem::Responses{
-        "204" => SWAGGER_API.response_ref("204"),
+        "204" => OPEN_API.response_ref("204"),
       }.merge(default_response_refs)
     end
   end
