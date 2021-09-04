@@ -2,7 +2,7 @@ require "./generator/*"
 
 module Granite::Api
   # Generates CRUD routes for `Granite` models
-  macro crud_routes(_model, api_version = 1)
+  macro crud_routes(_model, api_version = 1, auth = false)
     {% model = _model.resolve.resolve %}
 
     {% if !(model < Granite::Base) %}
@@ -42,6 +42,8 @@ module Granite::Api
 
     Granite::Api.register_route("GET", %get_list_path, {{model.id}})
     get %get_list_path do |env|
+      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
+
       env.response.content_type = "application/json"
       limit, offset = Granite::Api.limit_offset_args(env)
       sort_by, sort_order = Granite::Api.sort_args(env)
@@ -64,6 +66,12 @@ module Granite::Api
       items = query.select
       resp = { limit:  limit, offset: offset, size: items.size, total:  total, items:  items }
       Granite::Api.set_content_length(resp.to_json, env)
+    rescue ex : Granite::Api::Auth::Unauthorized
+      Log.error {ex.message}
+      Granite::Api::Auth.unauthorized_resp(env, ex.message)
+    rescue ex : Granite::Api::Auth::Unauthenticated
+      Log.error {ex.message}
+      Granite::Api::Auth.unauthenticated_resp(env)
     rescue ex
       Log.error(exception: ex) {ex.message}
       Granite::Api.resp_400(env, ex.message)
@@ -88,6 +96,7 @@ module Granite::Api
 
     Granite::Api.register_route("GET", "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}", {{model.id}})
     get "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
+      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
       Log.notice &.emit "get {{model.id}}", id: id
@@ -97,6 +106,10 @@ module Granite::Api
       else
         Granite::Api.set_content_length(item.to_json, env)
       end
+    rescue ex : Granite::Api::Auth::Unauthorized
+      Granite::Api::Auth.unauthorized_resp(env, ex.message)
+    rescue ex : Granite::Api::Auth::Unauthenticated
+      Granite::Api::Auth.unauthenticated_resp(env)
     rescue ex
       Log.error(exception: ex) {ex.message}
       Granite::Api.resp_400(env, ex.message)
@@ -114,7 +127,7 @@ module Granite::Api
     )
 
     delete "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
-      env.response.content_type = "application/json"
+      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
       Log.notice &.emit "delete {{model.id}}", id: id
@@ -125,6 +138,10 @@ module Granite::Api
         item.destroy!
         Granite::Api.resp_204(env)
       end
+    rescue ex : Granite::Api::Auth::Unauthorized
+      Granite::Api::Auth.unauthorized_resp(env, ex.message)
+    rescue ex : Granite::Api::Auth::Unauthenticated
+      Granite::Api::Auth.unauthenticated_resp(env)
     rescue ex
       Log.error(exception: ex) {ex.message}
       Granite::Api.resp_400(env, ex.message)
@@ -142,6 +159,7 @@ module Granite::Api
     )
 
     put "/api/#{%api_version}/#{%path}" do |env|
+      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
       env.response.content_type = "application/json"
 
       item = {{model}}.new
@@ -153,6 +171,10 @@ module Granite::Api
       else
         Granite::Api.resp_400(env, item.errors)
       end
+    rescue ex : Granite::Api::Auth::Unauthorized
+      Granite::Api::Auth.unauthorized_resp(env, ex.message)
+    rescue ex : Granite::Api::Auth::Unauthenticated
+      Granite::Api::Auth.unauthenticated_resp(env)
     rescue ex
       Log.error(exception: ex) {ex.message}
       Granite::Api.resp_400(env, ex.message)
@@ -173,6 +195,7 @@ module Granite::Api
     )
 
     patch "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
+      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
       Log.notice &.emit "patch {{model.id}}", id: id
@@ -188,6 +211,10 @@ module Granite::Api
           Granite::Api.resp_400(env, item.errors)
         end
       end
+    rescue ex : Granite::Api::Auth::Unauthorized
+      Granite::Api::Auth.unauthorized_resp(env, ex.message)
+    rescue ex : Granite::Api::Auth::Unauthenticated
+      Granite::Api::Auth.unauthenticated_resp(env)
     rescue ex
       Log.error(exception: ex) {ex.message}
       Granite::Api.resp_400(env, ex.message)
@@ -208,7 +235,7 @@ module Granite::Api
             %target_object_name, "#{%path}/{#{%model_def.primary_key}}/#{%target_object_name}"
           ),
           {{anno[:type]}}, {{anno[:target]}}, :{{anno[:foreign_key]}},
-          %path_id_param, %api_version, {{id_class}})
+          %path_id_param, %api_version, {{id_class}}, {{auth}})
       {% end %}
     {% end %}
   end

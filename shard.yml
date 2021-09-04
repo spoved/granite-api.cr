@@ -20,6 +20,8 @@ dependencies:
     github: hutou/tablo
   spoved:
     github: spoved/spoved.cr
+  jwt:
+    github: crystal-community/jwt
 
 development_dependencies:
   sqlite3:

@@ -1,7 +1,7 @@
 module Granite::Api
   # Define relationship routes for provided model
   macro define_relationships(_model, model_def, meth_name, target_model_def, rel_type, rel_target, foreign_key,
-                             path_id_param, api_version = "v1", id_class = UUID)
+                             path_id_param, api_version = "v1", id_class = UUID, auth = false)
     {% model = _model.resolve %}
     %model_def = {{model_def}}
     %target_model_def = {{target_model_def}}
@@ -27,6 +27,7 @@ module Granite::Api
       %_kemal_path = "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}/#{%target_model_def.name}"
       Granite::Api.register_route("GET", %_kemal_path, {{model.id}})
       get %_kemal_path do |env|
+        {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
         env.response.content_type = "application/json"
         id = env.params.url[%model_def.primary_key]
         item = {{model.id}}.find({{id_class}}.new(id))
@@ -35,6 +36,10 @@ module Granite::Api
         else
           Granite::Api.set_content_length(item.{{meth_name}}.to_json, env)
         end
+      rescue ex : Granite::Api::Auth::Unauthorized
+        Granite::Api::Auth.unauthorized_resp(env, ex.message)
+      rescue ex : Granite::Api::Auth::Unauthenticated
+        Granite::Api::Auth.unauthenticated_resp(env)
       rescue ex
         Log.error(exception: ex) {ex.message}
         Granite::Api.resp_400(env, ex.message)
@@ -63,6 +68,7 @@ module Granite::Api
       %_kemal_path = "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}/#{%target_model_def.name.pluralize}"
       Granite::Api.register_route("GET", %_kemal_path, {{model.id}})
       get %_kemal_path do |env|
+        {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
         env.response.content_type = "application/json"
         limit, offset = Granite::Api.limit_offset_args(env)
         sort_by, sort_order = Granite::Api.sort_args(env)
@@ -82,6 +88,10 @@ module Granite::Api
         items = query.select
         resp = { limit:  limit, offset: offset, size:   items.size, total:  total, items:  items }
         Granite::Api.set_content_length(resp.to_json, env)
+      rescue ex : Granite::Api::Auth::Unauthorized
+        Granite::Api::Auth.unauthorized_resp(env, ex.message)
+      rescue ex : Granite::Api::Auth::Unauthenticated
+        Granite::Api::Auth.unauthenticated_resp(env)
       rescue ex
         Log.error(exception: ex) {ex.message}
         Granite::Api.resp_400(env, ex.message)

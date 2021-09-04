@@ -1,5 +1,5 @@
 module Granite::Api
-  def init_server(name : String? = nil, host : String? = nil)
+  def init_server(name : String? = nil, host : String? = nil, auth : Granite::Api::Auth? = nil)
     open_api.info.title = "Mtg Helper API" if name
 
     if host
@@ -10,6 +10,10 @@ module Granite::Api
       Granite::Api.not_found_resp(env, "Nothin here, sorry.")
     end
 
+    if auth
+      add_handler Granite::Api::TokenHandler.new(auth)
+    end
+
     add_handler Granite::Api::CorsHandler.new
     Kemal.config.logger = Granite::Api::Logger.new
 
@@ -18,6 +22,9 @@ module Granite::Api
     end
 
     default_routes
+  end
+
+  def conf_auth(pub_key : String)
   end
 
   def register_schema(_model, model_def)

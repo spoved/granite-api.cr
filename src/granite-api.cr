@@ -10,6 +10,7 @@ require "uuid/json"
 require "./ext/*"
 
 module Granite::Api
+  spoved_logger
   extend self
 
   ROUTES   = Array(Array(String)).new
