@@ -2,7 +2,7 @@ require "./generator/*"
 
 module Granite::Api
   # Generates CRUD routes for `Granite` models
-  macro crud_routes(_model, api_version = 1, auth = false)
+  macro crud_routes(_model, api_version = 1, security_req = nil)
     {% model = _model.resolve.resolve %}
 
     {% if !(model < Granite::Base) %}
@@ -19,6 +19,7 @@ module Granite::Api
     %model_name = Granite::Api._api_model_name({{model.id}})
     %path : String =  %model_name
     %open_api = Granite::Api.open_api
+    %security_req = {{security_req}}
 
     Log.info &.emit "Generating CRUD routes for {{model}}"
     %model_def : Granite::Api::ModelDef({{model.id}}) = Granite::Api::ModelDef({{model.id}}).new(%model_name, %path)
@@ -36,13 +37,14 @@ module Granite::Api
       item: Granite::Api.create_get_list_op_item(
         model_name: %model_def.name,
         params: Granite::Api.list_req_params + %model_def.coll_filter_params,
-        resp_ref: %open_api.schema_ref(%resp_list_object_name)
+        resp_ref: %open_api.schema_ref(%resp_list_object_name),
+        security_req: %security_req,
       )
     )
 
     Granite::Api.register_route("GET", %get_list_path, {{model.id}})
     get %get_list_path do |env|
-      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
+      {% if security_req %}Granite::Api::Auth.authorized?(env, %security_req){% end %}
 
       env.response.content_type = "application/json"
       limit, offset = Granite::Api.limit_offset_args(env)
@@ -90,13 +92,14 @@ module Granite::Api
         params: [
           %path_id_param
         ],
-        resp_ref: %open_api.schema_ref(%model_def.name)
+        resp_ref: %open_api.schema_ref(%model_def.name),
+        security_req: %security_req,
       )
     )
 
     Granite::Api.register_route("GET", "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}", {{model.id}})
     get "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
-      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
+      {% if security_req %}Granite::Api::Auth.authorized?(env, %security_req){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
       Log.notice &.emit "get {{model.id}}", id: id
@@ -123,11 +126,12 @@ module Granite::Api
         params: [
           %path_id_param
         ],
+        security_req: %security_req,
       )
     )
 
     delete "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
-      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
+      {% if security_req %}Granite::Api::Auth.authorized?(env, %security_req){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
       Log.notice &.emit "delete {{model.id}}", id: id
@@ -155,11 +159,12 @@ module Granite::Api
         model_name: %model_def.name,
         model_ref: %open_api.schema_ref(%model_def.name),
         body_schema: Granite::Api.body_schema({{model.id}}),
+        security_req: %security_req,
       )
     )
 
     put "/api/#{%api_version}/#{%path}" do |env|
-      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
+      {% if security_req %}Granite::Api::Auth.authorized?(env, %security_req){% end %}
       env.response.content_type = "application/json"
 
       item = {{model}}.new
@@ -190,12 +195,13 @@ module Granite::Api
           %path_id_param
         ],
         body_object: %patch_body_object,
-        model_ref: %open_api.schema_ref(%model_def.name)
+        model_ref: %open_api.schema_ref(%model_def.name),
+        security_req: %security_req,
       )
     )
 
     patch "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
-      {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
+      {% if security_req %}Granite::Api::Auth.authorized?(env, %security_req){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
       Log.notice &.emit "patch {{model.id}}", id: id
@@ -235,7 +241,7 @@ module Granite::Api
             %target_object_name, "#{%path}/{#{%model_def.primary_key}}/#{%target_object_name}"
           ),
           {{anno[:type]}}, {{anno[:target]}}, :{{anno[:foreign_key]}},
-          %path_id_param, %api_version, {{id_class}}, {{auth}})
+          %path_id_param, %api_version, {{id_class}}, %security_req)
       {% end %}
     {% end %}
   end

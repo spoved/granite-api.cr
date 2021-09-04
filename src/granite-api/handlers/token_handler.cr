@@ -40,9 +40,12 @@ module Granite::Api
 
     def call(env)
       return call_next(env) if exclude_match?(env)
+      return call_next(env) unless auth_config.security_scheme.is_a?(Open::Api::Security::Scheme::HTTPAuth::Bearer)
+
       if env.request.headers["Authorization"]? && env.request.headers["Authorization"] =~ /Bearer (.*)/
         token = $1.not_nil!
-        env.set "token", BearerToken.new(token, auth_config.pub_key)
+
+        env.set "token", BearerToken.new(token, auth_config.pub_key.not_nil!)
       else
         env.set "token", nil
       end

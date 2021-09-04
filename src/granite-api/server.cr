@@ -12,6 +12,7 @@ module Granite::Api
 
     if auth
       add_handler Granite::Api::TokenHandler.new(auth)
+      open_api.register_security_scheme(auth.scheme_name, auth.security_scheme)
     end
 
     add_handler Granite::Api::CorsHandler.new
@@ -43,12 +44,15 @@ module Granite::Api
     end
   end
 
-  macro register_route(typ, path, model = nil, op_item = nil, summary = nil, schema = nil)
+  macro register_route(typ, path, model = nil, op_item = nil, summary = nil, schema = nil, params = nil, security = nil, tags = nil)
     Log.info { "registring route: " + {{path}} }
     Granite::Api::ROUTES << [ {{typ}}, {{path}}, {{model ? model.stringify : ""}} ]
     %summary = {{summary}}
     %schema = {{schema}}
     %op_item = {{op_item}}
+    %params = {{params}}
+    %security = {{security}}
+    %tags = {{tags}}
 
     if %op_item.nil? && %summary.is_a?(String) && %schema.is_a?(Open::Api::Schema)
       %op_item = Open::Api::OperationItem.new(%summary).tap do |op|
@@ -65,6 +69,18 @@ module Granite::Api
           "500"     => Granite::Api.open_api.response_ref("500"),
           "default" => Granite::Api.open_api.response_ref("default"),
         }
+
+        unless %params.nil?
+          op.parameters.concat %params
+        end
+
+        unless %security.nil?
+          op.security = %security
+        end
+
+        unless %tags.nil?
+          op.tags = %tags
+        end
       end
     end
 

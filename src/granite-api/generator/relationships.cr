@@ -1,7 +1,7 @@
 module Granite::Api
   # Define relationship routes for provided model
   macro define_relationships(_model, model_def, meth_name, target_model_def, rel_type, rel_target, foreign_key,
-                             path_id_param, api_version = "v1", id_class = UUID, auth = false)
+                             path_id_param, api_version = "v1", id_class = UUID, security_req = nil)
     {% model = _model.resolve %}
     %model_def = {{model_def}}
     %target_model_def = {{target_model_def}}
@@ -9,6 +9,7 @@ module Granite::Api
     %path = %model_def.path
     %open_api = %model_def.open_api
     %path_id_param = {{path_id_param}}
+    %security_req = {{security_req}}
 
     Granite::Api.register_schema({{rel_target}}, %target_model_def)
 
@@ -21,13 +22,14 @@ module Granite::Api
           params: [
             %path_id_param
           ],
-          resp_ref: %open_api.schema_ref(%target_model_def.name)
+          resp_ref: %open_api.schema_ref(%target_model_def.name),
+          security_req: %security_req,
         )
       )
       %_kemal_path = "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}/#{%target_model_def.name}"
       Granite::Api.register_route("GET", %_kemal_path, {{model.id}})
       get %_kemal_path do |env|
-        {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
+        {% if security_req %}Granite::Api::Auth.authorized?(env, %security_req){% end %}
         env.response.content_type = "application/json"
         id = env.params.url[%model_def.primary_key]
         item = {{model.id}}.find({{id_class}}.new(id))
@@ -61,14 +63,15 @@ module Granite::Api
             %target_model_def.coll_filter_params,
             %path_id_param,
           ].flatten,
-          resp_ref: %open_api.schema_ref(%resp_list_object_name)
+          resp_ref: %open_api.schema_ref(%resp_list_object_name),
+          security_req: %security_req,
         )
       )
 
       %_kemal_path = "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}/#{%target_model_def.name.pluralize}"
       Granite::Api.register_route("GET", %_kemal_path, {{model.id}})
       get %_kemal_path do |env|
-        {% if auth %}Granite::Api::Auth.authorized?(env){% end %}
+        {% if security_req %}Granite::Api::Auth.authorized?(env, %security_req){% end %}
         env.response.content_type = "application/json"
         limit, offset = Granite::Api.limit_offset_args(env)
         sort_by, sort_order = Granite::Api.sort_args(env)
