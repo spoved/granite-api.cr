@@ -18,7 +18,7 @@ module Granite::Api
         if token.is_a?(BearerToken)
           raise Unauthorized.new(token.error || "unauthorized") unless token.valid?
         else
-          raise Unauthenticated.new
+          raise Unauthenticated.new("unauthenticated")
         end
       end
 
