@@ -47,11 +47,12 @@ module Granite::Api
   end
 
   def create_get_list_op_item(model_name, params, resp_ref, operation_id : String? = nil,
-                              security_req : Open::Api::Security::Requirement? = nil) : Open::Api::OperationItem
+                              security : Array(Open::Api::Security::Requirement)? = nil) : Open::Api::OperationItem
     Open::Api::OperationItem.new(
       summary: "Returns list of #{model_name}",
       operation_id: operation_id.nil? ? "get_#{model_name}_list" : operation_id,
       tags: [model_name],
+      security: security,
     ).tap do |op|
       op.parameters.concat params
       op.responses = Open::Api::OperationItem::Responses{
@@ -61,17 +62,16 @@ module Granite::Api
           }
         end,
       }.merge(default_response_refs)
-
-      op.security = [security_req] unless security_req.nil?
     end
   end
 
   def create_get_op_item(model_name, params, resp_ref, operation_id : String? = nil,
-                         security_req : Open::Api::Security::Requirement? = nil) : Open::Api::OperationItem
+                         security : Array(Open::Api::Security::Requirement)? = nil) : Open::Api::OperationItem
     Open::Api::OperationItem.new(
       summary: "Returns record of a specified #{model_name}",
       operation_id: operation_id.nil? ? "get_#{model_name}_by_id" : operation_id,
       tags: [model_name],
+      security: security,
     ).tap do |op|
       op.parameters.concat params
       op.responses = Open::Api::OperationItem::Responses{
@@ -81,34 +81,33 @@ module Granite::Api
           }
         end,
       }.merge(default_response_refs)
-
-      op.security = [security_req] unless security_req.nil?
     end
   end
 
   # Create a new delete `Open::Api::OperationItem` for a model
   def create_delete_op_item(model_name, params,
-                            security_req : Open::Api::Security::Requirement? = nil) : Open::Api::OperationItem
+                            security : Array(Open::Api::Security::Requirement)? = nil) : Open::Api::OperationItem
     Open::Api::OperationItem.new(
       summary: "Delete the specified #{model_name}",
       operation_id: "delete_#{model_name}_by_id",
       tags: [model_name],
+      security: security,
     ).tap do |op|
       op.parameters.concat params
       op.responses = Open::Api::OperationItem::Responses{
         "204" => OPEN_API.response_ref("204"),
       }.merge(default_response_refs)
-      op.security = [security_req] unless security_req.nil?
     end
   end
 
   # Create a new create `Open::Api::OperationItem` for a model
   def create_put_op_item(model_name, model_ref, body_schema : Open::Api::Schema,
-                         security_req : Open::Api::Security::Requirement? = nil) : Open::Api::OperationItem
+                         security : Array(Open::Api::Security::Requirement)? = nil) : Open::Api::OperationItem
     Open::Api::OperationItem.new(
       summary: "Create new #{model_name} record",
       operation_id: "create_#{model_name}",
       tags: [model_name],
+      security: security,
     ).tap do |op|
       op.responses = Open::Api::OperationItem::Responses{
         "200" => Open::Api::Response.new("create new #{model_name} record").tap do |resp|
@@ -124,16 +123,16 @@ module Granite::Api
         },
         required: true,
       )
-      op.security = [security_req] unless security_req.nil?
     end
   end
 
   def create_patch_op_item(model_name, params, body_object, model_ref,
-                           security_req : Open::Api::Security::Requirement? = nil) : Open::Api::OperationItem
+                           security : Array(Open::Api::Security::Requirement)? = nil) : Open::Api::OperationItem
     Open::Api::OperationItem.new(
       summary: "Update the specified #{model_name}",
       operation_id: "update_#{model_name}_by_id",
       tags: [model_name],
+      security: security,
     ).tap do |op|
       op.parameters.concat params
 
@@ -152,8 +151,6 @@ module Granite::Api
         },
         required: true,
       )
-
-      op.security = [security_req] unless security_req.nil?
     end
   end
 

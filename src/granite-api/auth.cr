@@ -13,7 +13,7 @@ module Granite::Api
     class Unauthenticated < Exception; end
 
     module ClassMethods
-      def authorized?(env, sec_req : Open::Api::Security::Requirement? = nil)
+      def authorized?(env, security : Array(Open::Api::Security::Requirement)? = nil)
         token = env.get?("token")
         if token.is_a?(BearerToken)
           raise Unauthorized.new(token.error || "unauthorized") unless token.valid?
