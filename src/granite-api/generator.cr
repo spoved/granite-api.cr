@@ -51,7 +51,7 @@ module Granite::Api
       sort_by, sort_order = Granite::Api.sort_args(env)
       filters = Granite::Api.param_args(env, %model_def.coll_filter_params)
 
-      Log.notice &.emit "get {{model.id}}", filters: filters.to_json, limit: limit,
+      Log.debug &.emit "get {{model.id}}", filters: filters.to_json, limit: limit,
         offset: offset, sort_by: sort_by, sort_order: sort_order
 
       query = {{model.id}}.where
@@ -102,7 +102,7 @@ module Granite::Api
       {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
-      Log.notice &.emit "get {{model.id}}", id: id
+      Log.debug &.emit "get {{model.id}}", id: id
       item = {{model.id}}.find({{id_class}}.new(id))
       if item.nil?
         Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
@@ -134,7 +134,7 @@ module Granite::Api
       {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
-      Log.notice &.emit "delete {{model.id}}", id: id
+      Log.debug &.emit "delete {{model.id}}", id: id
       item = {{model.id}}.find({{id_class}}.new(id))
       if item.nil?
         Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
@@ -204,7 +204,7 @@ module Granite::Api
       {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
       env.response.content_type = "application/json"
       id = env.params.url[%model_def.primary_key]
-      Log.notice &.emit "patch {{model.id}}", id: id
+      Log.debug &.emit "patch {{model.id}}", id: id
       item = {{model.id}}.find({{id_class}}.new(id))
       if item.nil?
         Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
