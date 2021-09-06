@@ -134,11 +134,11 @@ module Granite::Api
         values.each do |param|
           case param[:name]
           when "{{primary_key.id}}"
-            Log.warn { "patching attr {{primary_key.id}}" }
+            Log.trace { "patching attr {{primary_key.id}}" }
             item.{{primary_key.id}} = {{id_class}}.new(param[:value].as(String))
           {% for column in columns %}
           when "{{column.id}}"
-            Log.warn { "patching attr {{column.id}}" }
+            Log.trace { "patching attr {{column.id}}" }
             {% if enum_check[column.id] %}
             item.{{column.id}} =  {{column.type.union_types.first}}.parse(param[:value].as(String))
             {% elsif column.type.union_types.first <= UUID %}
