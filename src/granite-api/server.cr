@@ -53,6 +53,12 @@ module Granite::Api
     %params = {{params}}
     %security = {{security}}
     %tags = {{tags}}
+    %open_api_path = {{path}}
+
+    if %open_api_path =~ /\/:([\w\_]+)\//
+      %open_api_path = %open_api_path.gsub(/\/:([\w\_]+)\//, "/{#{$1}}/")
+      # puts %open_api_path
+    end
 
     if %op_item.nil? && %summary.is_a?(String) && %schema.is_a?(Open::Api::Schema)
       %op_item = Open::Api::OperationItem.new(%summary).tap do |op|
@@ -85,7 +91,7 @@ module Granite::Api
     end
 
     if %op_item.is_a?(Open::Api::OperationItem)
-      Granite::Api.open_api.add_path({{path}}, Open::Api::Operation.parse({{typ}}), %op_item)
+      Granite::Api.open_api.add_path(%open_api_path, Open::Api::Operation.parse({{typ}}), %op_item)
     end
   end
 end

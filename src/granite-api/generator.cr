@@ -20,6 +20,7 @@ module Granite::Api
     %path : String =  %model_name
     %open_api = Granite::Api.open_api
     %security = {{security}}
+    %read_only = {{ !model.annotations(Granite::Api::ReadOnly).empty? }}
 
     Log.info &.emit "Generating CRUD routes for {{model}}"
     %model_def : Granite::Api::ModelDef({{model.id}}) = Granite::Api::ModelDef({{model.id}}).new(%model_name, %path)
@@ -118,112 +119,114 @@ module Granite::Api
       Granite::Api.resp_400(env, ex.message)
     end
 
-    ###### DELETE By Id ######
-    Granite::Api.register_route("DELETE", "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}", {{model.id}})
-    %open_api.add_path("/api/#{%api_version}/#{%path}/{#{%model_def.primary_key}}", Open::Api::Operation::Delete,
-      item: Granite::Api.create_delete_op_item(
-        model_name: %model_def.name,
-        params: [
-          %path_id_param
-        ],
-        security: %security,
+    unless %read_only
+      ###### DELETE By Id ######
+      Granite::Api.register_route("DELETE", "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}", {{model.id}})
+      %open_api.add_path("/api/#{%api_version}/#{%path}/{#{%model_def.primary_key}}", Open::Api::Operation::Delete,
+        item: Granite::Api.create_delete_op_item(
+          model_name: %model_def.name,
+          params: [
+            %path_id_param
+          ],
+          security: %security,
+        )
       )
-    )
 
-    delete "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
-      {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
-      env.response.content_type = "application/json"
-      id = env.params.url[%model_def.primary_key]
-      Log.debug &.emit "delete {{model.id}}", id: id
-      item = {{model.id}}.find({{id_class}}.new(id))
-      if item.nil?
-        Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
-      else
-        item.destroy!
-        Granite::Api.resp_204(env)
+      delete "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
+        {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
+        env.response.content_type = "application/json"
+        id = env.params.url[%model_def.primary_key]
+        Log.debug &.emit "delete {{model.id}}", id: id
+        item = {{model.id}}.find({{id_class}}.new(id))
+        if item.nil?
+          Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
+        else
+          item.destroy!
+          Granite::Api.resp_204(env)
+        end
+      rescue ex : Granite::Api::Auth::Unauthorized
+        Granite::Api::Auth.unauthorized_resp(env, ex.message)
+      rescue ex : Granite::Api::Auth::Unauthenticated
+        Granite::Api::Auth.unauthenticated_resp(env)
+      rescue ex
+        Log.error(exception: ex) {ex.message}
+        Granite::Api.resp_400(env, ex.message)
       end
-    rescue ex : Granite::Api::Auth::Unauthorized
-      Granite::Api::Auth.unauthorized_resp(env, ex.message)
-    rescue ex : Granite::Api::Auth::Unauthenticated
-      Granite::Api::Auth.unauthenticated_resp(env)
-    rescue ex
-      Log.error(exception: ex) {ex.message}
-      Granite::Api.resp_400(env, ex.message)
-    end
 
 
-    ###### POST/PUT ######
-    Granite::Api.register_route("PUT", "/api/#{%api_version}/#{%path}", {{model.id}})
-    %open_api.add_path("/api/#{%api_version}/#{%path}", Open::Api::Operation::Put,
-      item: Granite::Api.create_put_op_item(
-        model_name: %model_def.name,
-        model_ref: %open_api.schema_ref(%model_def.name),
-        body_schema: Granite::Api.body_schema({{model.id}}),
-        security: %security,
+      ###### POST/PUT ######
+      Granite::Api.register_route("PUT", "/api/#{%api_version}/#{%path}", {{model.id}})
+      %open_api.add_path("/api/#{%api_version}/#{%path}", Open::Api::Operation::Put,
+        item: Granite::Api.create_put_op_item(
+          model_name: %model_def.name,
+          model_ref: %open_api.schema_ref(%model_def.name),
+          body_schema: Granite::Api.body_schema({{model.id}}),
+          security: %security,
+        )
       )
-    )
 
-    put "/api/#{%api_version}/#{%path}" do |env|
-      {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
-      env.response.content_type = "application/json"
+      put "/api/#{%api_version}/#{%path}" do |env|
+        {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
+        env.response.content_type = "application/json"
 
-      item = {{model}}.new
-      values = Granite::Api.param_args(env, %patch_body_params)
-      %model_def.patch_item.call(item, values)
-
-      if item.save
-        Granite::Api.set_content_length(item.to_json, env)
-      else
-        Granite::Api.resp_400(env, item.errors)
-      end
-    rescue ex : Granite::Api::Auth::Unauthorized
-      Granite::Api::Auth.unauthorized_resp(env, ex.message)
-    rescue ex : Granite::Api::Auth::Unauthenticated
-      Granite::Api::Auth.unauthenticated_resp(env)
-    rescue ex
-      Log.error(exception: ex) {ex.message}
-      Granite::Api.resp_400(env, ex.message)
-    end
-
-    ###### PATCH ######
-
-    Granite::Api.register_route("PATCH", "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}", {{model.id}})
-    %open_api.add_path("/api/#{%api_version}/#{%path}/{#{%model_def.primary_key}}", Open::Api::Operation::Patch,
-      item: Granite::Api.create_patch_op_item(
-        model_name: %model_def.name,
-        params: [
-          %path_id_param
-        ],
-        body_object: %patch_body_object,
-        model_ref: %open_api.schema_ref(%model_def.name),
-        security: %security,
-      )
-    )
-
-    patch "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
-      {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
-      env.response.content_type = "application/json"
-      id = env.params.url[%model_def.primary_key]
-      Log.debug &.emit "patch {{model.id}}", id: id
-      item = {{model.id}}.find({{id_class}}.new(id))
-      if item.nil?
-        Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
-      else
+        item = {{model}}.new
         values = Granite::Api.param_args(env, %patch_body_params)
         %model_def.patch_item.call(item, values)
+
         if item.save
           Granite::Api.set_content_length(item.to_json, env)
         else
           Granite::Api.resp_400(env, item.errors)
         end
+      rescue ex : Granite::Api::Auth::Unauthorized
+        Granite::Api::Auth.unauthorized_resp(env, ex.message)
+      rescue ex : Granite::Api::Auth::Unauthenticated
+        Granite::Api::Auth.unauthenticated_resp(env)
+      rescue ex
+        Log.error(exception: ex) {ex.message}
+        Granite::Api.resp_400(env, ex.message)
       end
-    rescue ex : Granite::Api::Auth::Unauthorized
-      Granite::Api::Auth.unauthorized_resp(env, ex.message)
-    rescue ex : Granite::Api::Auth::Unauthenticated
-      Granite::Api::Auth.unauthenticated_resp(env)
-    rescue ex
-      Log.error(exception: ex) {ex.message}
-      Granite::Api.resp_400(env, ex.message)
+
+      ###### PATCH ######
+
+      Granite::Api.register_route("PATCH", "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}", {{model.id}})
+      %open_api.add_path("/api/#{%api_version}/#{%path}/{#{%model_def.primary_key}}", Open::Api::Operation::Patch,
+        item: Granite::Api.create_patch_op_item(
+          model_name: %model_def.name,
+          params: [
+            %path_id_param
+          ],
+          body_object: %patch_body_object,
+          model_ref: %open_api.schema_ref(%model_def.name),
+          security: %security,
+        )
+      )
+
+      patch "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}" do |env|
+        {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
+        env.response.content_type = "application/json"
+        id = env.params.url[%model_def.primary_key]
+        Log.debug &.emit "patch {{model.id}}", id: id
+        item = {{model.id}}.find({{id_class}}.new(id))
+        if item.nil?
+          Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
+        else
+          values = Granite::Api.param_args(env, %patch_body_params)
+          %model_def.patch_item.call(item, values)
+          if item.save
+            Granite::Api.set_content_length(item.to_json, env)
+          else
+            Granite::Api.resp_400(env, item.errors)
+          end
+        end
+      rescue ex : Granite::Api::Auth::Unauthorized
+        Granite::Api::Auth.unauthorized_resp(env, ex.message)
+      rescue ex : Granite::Api::Auth::Unauthenticated
+        Granite::Api::Auth.unauthenticated_resp(env)
+      rescue ex
+        Log.error(exception: ex) {ex.message}
+        Granite::Api.resp_400(env, ex.message)
+      end
     end
 
     Log.info { "Generating relationship routes for {{model.id}}" }

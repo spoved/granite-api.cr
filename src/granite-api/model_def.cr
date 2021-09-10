@@ -146,6 +146,9 @@ module Granite::Api
             {% elsif column.type.union_types.first <= Int32 %}
             %var = param[:value].as(Int64)
             item.{{column.id}} = %var.to_i unless %var.nil?
+            {% elsif column.type.union_types.first <= Float32 %}
+            %var = param[:value].as(Float64)
+            item.{{column.id}} = %var.to_f32 unless %var.nil?
             {% else %}
             %var = param[:value].as({{column.type}})
             item.{{column.id}} = %var unless %var.nil?

@@ -14,7 +14,7 @@ module Granite::Api
     end
 
     private def validate
-      @payload, @header = JWT.decode(@token, @pub_key, JWT::Algorithm::RS256, verify: false, validate: true)
+      @payload, @header = JWT.decode(@token, @pub_key, JWT::Algorithm::RS256, verify: false, validate: !(ENV["KEMAL_ENV"]? == "test"))
       @valid = true
     rescue ex
       Log.trace { "BearerToken: #{ex}" }

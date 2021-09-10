@@ -126,6 +126,39 @@ module Granite::Api
     end
   end
 
+  def create_post_op_item(model_name : String, resp_ref : Open::Api::SchemaRef, body_schema : Open::Api::SchemaRef,
+                          params : Array(Open::Api::Parameter | Open::Api::Ref),
+                          security : Array(Open::Api::Security::Requirement)? = nil,
+                          summary : String? = nil, operation_id : String? = nil) : Open::Api::OperationItem
+    summary ||= "Create new #{model_name} record"
+    operation_id ||= "create_#{model_name}"
+
+    Open::Api::OperationItem.new(
+      summary: summary,
+      operation_id: operation_id,
+      tags: [model_name],
+      security: security,
+    ).tap do |op|
+      op.parameters.concat params
+
+      op.responses = Open::Api::OperationItem::Responses{
+        "200" => Open::Api::Response.new(summary).tap do |resp|
+          resp.content = {
+            "application/json" => Open::Api::MediaType.new(schema: resp_ref),
+          }
+        end,
+      }.merge(default_response_refs)
+
+      op.request_body = Open::Api::RequestBody.new(
+        description: "#{model_name} object",
+        content: {
+          "application/json" => Open::Api::MediaType.new(schema: body_schema),
+        },
+        required: true,
+      )
+    end
+  end
+
   def create_patch_op_item(model_name, params, body_object, model_ref,
                            security : Array(Open::Api::Security::Requirement)? = nil) : Open::Api::OperationItem
     Open::Api::OperationItem.new(
