@@ -101,18 +101,24 @@ module Granite::Api
       {% end %}
 
       %model_def.order_by = ->(order_by: Hash(String, Symbol),  query : Granite::Query::Builder({{model.id}})){
-        orders = Array(Tuple(Symbol, Symbol)).new
+        # FIXME: figure out a way to order by multiple columns
+
+        # orders = Array(Tuple(Symbol, Symbol)).new
         order_by.each do |k, v|
           case k
           when "{{primary_key.id}}"
-            orders << {:{{primary_key.id}}, v}
+            # orders << {:{{primary_key.id}}, v}
+            query.order({{primary_key.id}}: v)
+            break
           {% for column in columns %}
           when "{{column.id}}"
-            orders << {:{{column.id}}, v}
+            # orders << {:{{column.id}}, v}
+            query.order({{column.id}}: v)
+            break
           {% end %}
           end
         end
-        query.order(orders) unless orders.empty?
+        # query.order(orders) unless orders.empty?
       }
 
       %model_def.apply_filters = ->(filters : Array(Granite::Api::ParamFilter), query : Granite::Query::Builder({{model.id}})){
