@@ -74,13 +74,13 @@ module Granite::Api
         {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
         env.response.content_type = "application/json"
         limit, offset = Granite::Api.limit_offset_args(env)
-        sort_by, sort_order = Granite::Api.sort_args(env)
+        order_by = Granite::Api.order_by_args(env)
         id = env.params.url[%model_def.primary_key]
         filters = Granite::Api.param_args(env, %target_model_def.coll_filter_params)
         query = {{rel_target}}.where({{foreign_key.id}}: {{id_class}}.new(id))
 
         # If sort is not specified, sort by provided column
-        %target_model_def.sort_by.call(sort_by, sort_order, query)
+        %target_model_def.order_by.call(order_by, query)
 
         # If filters are specified, apply them
         %target_model_def.apply_filters.call(filters, query)

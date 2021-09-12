@@ -49,16 +49,16 @@ module Granite::Api
 
       env.response.content_type = "application/json"
       limit, offset = Granite::Api.limit_offset_args(env)
-      sort_by, sort_order = Granite::Api.sort_args(env)
+      order_by = Granite::Api.order_by_args(env)
       filters = Granite::Api.param_args(env, %model_def.coll_filter_params)
 
       Log.debug &.emit "get {{model.id}}", filters: filters.to_json, limit: limit,
-        offset: offset, sort_by: sort_by, sort_order: sort_order
+        offset: offset, order_by: order_by.to_json
 
       query = {{model.id}}.where
 
       # If sort is not specified, sort by provided column
-      %model_def.sort_by.call(sort_by, sort_order, query)
+      %model_def.order_by.call(order_by, query)
 
       # If filters are specified, apply them
       %model_def.apply_filters.call(filters, query)

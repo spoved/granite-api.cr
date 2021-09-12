@@ -54,14 +54,9 @@ module Granite::Api
         description: "offset the results returned",
         required: false, default_value: 0
       ),
-      "resp_sort_by" => Open::Api::Parameter.new(
-        "sort_by", String?, location: "query",
+      "resp_order_by" => Open::Api::Parameter.new(
+        "order_by", String?, location: "query",
         description: "sort the results returned by provided field.",
-        required: false, default_value: nil
-      ),
-      "resp_sort_order" => Open::Api::Parameter.new(
-        "sort_order", String?, location: "query",
-        description: "sort the results returned in the provided order (asc, desc).",
         required: false, default_value: nil
       ),
     }.each do |name, param|
