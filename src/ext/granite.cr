@@ -39,7 +39,7 @@ class Granite::Base
 
     # :nodoc:
     def _set_timestamps
-      Log.warn { "SETTING TIMES"}
+      # Log.warn { "SETTING TIMES"}
       self.created_at = Time.utc.to_unix if @created_at.nil?
       self.modified_at = Time.utc.to_unix
     end
