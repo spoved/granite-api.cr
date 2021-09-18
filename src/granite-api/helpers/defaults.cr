@@ -7,7 +7,7 @@ module Granite::Api
 
     get "/api/v1/swagger.yaml" do |env|
       env.response.content_type = "application/yaml"
-      Granite::Api.set_content_length(open_api.to_yaml, env)
+      Granite::Api.set_content_length(open_api.to_yaml.gsub(/^\-{3}\s+/, ""), env)
     end
 
     Granite::Api.register_route("OPTIONS", "/*",
