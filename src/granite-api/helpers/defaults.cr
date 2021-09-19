@@ -51,7 +51,7 @@ module Granite::Api
     ))
 
     # FIXME: enable and move filters to this method
-    # OPEN_API.register_schema("filter_obj", Open::Api::Schema.from_type(Granite::Api::FilterObj))
+    OPEN_API.register_schema("filter_obj", Open::Api::Schema.from_type(Granite::Api::FilterObj))
   end
 
   private def register_default_parameters
