@@ -13,6 +13,7 @@ module Granite::Api
   spoved_logger
   extend self
 
+  annotation Formatter; end
   annotation ReadOnly; end
 
   ROUTES   = Array(Array(String)).new

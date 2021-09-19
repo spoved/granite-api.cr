@@ -205,12 +205,14 @@ module Granite::Api
       schema.properties = Hash(String, Open::Api::SchemaRef){
         {% for column in columns %}
         {{column.id.stringify}} => Open::Api::Schema.new(
-          {% if enum_check[column.id] %}
-          schema_type: "string", format: "string", default: {{column.default_value.id}}.to_s,
+          {% if column.annotation(Granite::Api::Formatter) && column.annotation(Granite::Api::Formatter)[:type] == :json %}
+          schema_type: "object",
+          {% elsif enum_check[column.id] %}
+          schema_type: "string", format: "string", default: {{column.default_value}}.to_s,
           {% else %}
           schema_type: Open::Api.get_open_api_type({{column.type}}),
           format: Open::Api.get_open_api_format({{column.type}}),
-          default: {{column.default_value.id}}
+          default: {{column.default_value}}
           {% end %}
         ),
         {% end %}

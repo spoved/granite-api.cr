@@ -14,7 +14,7 @@ dependencies:
     branch: kalinon
   open-api:
     github: spoved/open-api.cr
-    version: ">= 0.2.4"
+    version: ">= 0.2.5"
   kemal:
     github: kemalcr/kemal
   tablo:

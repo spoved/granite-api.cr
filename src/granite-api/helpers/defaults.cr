@@ -1,4 +1,6 @@
 module Granite::Api
+  record FilterObj, name : String, op : String, value : String
+
   private def default_routes
     get "/api/v1/swagger.json" do |env|
       env.response.content_type = "application/json"
@@ -14,7 +16,9 @@ module Granite::Api
       summary: "CORS Options Return",
       schema: Open::Api::Schema.new("object",
         required: ["msg"],
-        properties: Hash(String, Open::Api::SchemaRef){"msg" => Open::Api::Schema.new("string")})
+        properties: Hash(String, Open::Api::SchemaRef){
+          "msg" => Open::Api::Schema.new("string"),
+        })
     )
     options "/*" do
       # TODO: what should OPTIONS requests actually respond with?
@@ -45,6 +49,9 @@ module Granite::Api
         "message" => Open::Api::Schema.new("string"),
       },
     ))
+
+    # FIXME: enable and move filters to this method
+    # OPEN_API.register_schema("filter_obj", Open::Api::Schema.from_type(Granite::Api::FilterObj))
   end
 
   private def register_default_parameters
@@ -63,6 +70,15 @@ module Granite::Api
         "order_by", String?, location: "query",
         description: "sort the results returned by provided field.",
         required: false, default_value: nil
+      ),
+      "query_filters" => Open::Api::Parameter.new(
+        name: "filters", parameter_in: "query",
+        schema: Open::Api::Schema.new(
+          schema_type: "array",
+          items: OPEN_API.schema_ref("filter_obj")
+        ),
+        description: "return results that match all filters",
+        required: false
       ),
     }.each do |name, param|
       OPEN_API.register_parameter name, param

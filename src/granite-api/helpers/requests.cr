@@ -4,6 +4,7 @@ module Granite::Api
       OPEN_API.parameter_ref("resp_limit"),
       OPEN_API.parameter_ref("resp_offset"),
       OPEN_API.parameter_ref("resp_order_by"),
+      OPEN_API.parameter_ref("query_filters"),
     ]
   end
 

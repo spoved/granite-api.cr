@@ -61,36 +61,46 @@ module Granite::Api
       {% id_class = primary_key.type.union_types.first %}
       {% columns = [] of MetaVar %}
       {% enum_check = {} of StringLiteral => BoolLiteral %}
+      {% json_check = {} of StringLiteral => BoolLiteral %}
+
       {% for var in model.instance_vars %}
         {% if var.annotation(Granite::Column) %}
           {% is_enum = var.type.union_types.first < Enum %}
           {% if is_enum %}{% enum_check[var.id] = is_enum %}{% end %}
+          {% is_json = var.annotation(Granite::Api::Formatter) && var.annotation(Granite::Api::Formatter)[:type] == :json %}
+          {% if is_json %}{% json_check[var.id] = is_json %}{% end %}
 
-          %model_def.collumn_params << Granite::Api::CollParamDef.new(
-            name: "{{var.id}}",
-            type: {% if enum_check[var.id] %}String{% else %}{{var.type.union_types.first}}{% end %},
-            primary: {{var.annotation(Granite::Column)[:primary] ? true : false}},
-            default_value: {% if var.has_default_value? %}{{var.default_value.id}}{% if enum_check[var.id] %}.to_s{% end %}{% else %}nil{% end %},
-            filter_params: Granite::Api.filter_params_for_var("{{var.id}}", {% if enum_check[var.id] %}String{% else %}{{var.type}}{% end %}),
-            coll_param: Open::Api::Parameter.new(
-              "{{var.id}}",
-              {% if enum_check[var.id] %}String{% else %}{{var.type}}{% end %},
-              description: "return results that match {{var.id}}",
-              default_value: {% if var.has_default_value? %}{{var.default_value.id}}{% if enum_check[var.id] %}.to_s{% end %}{% else %}nil{% end %}
-            ),
-          )
 
-          %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new(
-            {% if enum_check[var.id] %}
-            schema_type: "string",
-            format: "string",
-            default: {{var.default_value.id}}.to_s,
-            {% else %}
-            schema_type: Open::Api.get_open_api_type({{var.type}}),
-            format: Open::Api.get_open_api_format({{var.type}}),
-            default: {{var.default_value.id}}
-            {% end %}
-          )
+          {% if is_json %}
+            # If its a json field, skip adding it to collumn params.
+            %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("object")
+          {% else %}
+            %model_def.collumn_params << Granite::Api::CollParamDef.new(
+              name: "{{var.id}}",
+              type: {% if enum_check[var.id] %}String{% else %}{{var.type.union_types.first}}{% end %},
+              primary: {{var.annotation(Granite::Column)[:primary] ? true : false}},
+              default_value: {% if var.has_default_value? %}{{var.default_value}}{% if enum_check[var.id] %}.to_s{% end %}{% else %}nil{% end %},
+              filter_params: Granite::Api.filter_params_for_var("{{var.id}}", {% if enum_check[var.id] %}String{% else %}{{var.type}}{% end %}),
+              coll_param: Open::Api::Parameter.new(
+                "{{var.id}}",
+                {% if enum_check[var.id] %}String{% else %}{{var.type}}{% end %},
+                description: "return results that match {{var.id}}",
+                default_value: {% if var.has_default_value? %}{{var.default_value}}{% if enum_check[var.id] %}.to_s{% end %}{% else %}nil{% end %}
+              ),
+            )
+
+            %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new(
+              {% if enum_check[var.id] %}
+              schema_type: "string",
+              format: "string",
+              default: {{var.default_value}}.to_s,
+              {% else %}
+              schema_type: Open::Api.get_open_api_type({{var.type}}),
+              format: Open::Api.get_open_api_format({{var.type}}),
+              default: {{var.default_value}}
+              {% end %}
+            )
+          {% end %}
 
           {% if var.annotation(Granite::Column)[:primary] %}
             # skip the primary key
@@ -148,7 +158,9 @@ module Granite::Api
           {% for column in columns %}
           when "{{column.id}}"
             Log.trace { "patching attr {{column.id}}" }
-            {% if enum_check[column.id] %}
+            {% if column.annotation(Granite::Api::Formatter) && column.annotation(Granite::Api::Formatter)[:type] == :json %}
+            item.{{column.id}} =  param[:value].to_json
+            {% elsif enum_check[column.id] %}
             item.{{column.id}} =  {{column.type.union_types.first}}.parse(param[:value].as(String))
             {% elsif column.type.union_types.first <= UUID %}
             item.{{column.id}} = UUID.new(param[:value].as(String))

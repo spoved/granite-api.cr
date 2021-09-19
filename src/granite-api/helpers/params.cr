@@ -74,8 +74,7 @@ module Granite::Api
   # Create `Open::Api::Parameter` for the provided column type
   def filter_params_for_var(name, type, **args) : Array(Open::Api::Parameter)
     params = [] of Open::Api::Parameter
-    params << Open::Api::Parameter.new(name, type, **args, description: "return results that match #{name}")
-
+    params << Open::Api::Parameter.new(name, **args, type: type, description: "return results that match #{name}")
     case Open::Api.get_open_api_type(type)
     when "string"
       case type
