@@ -81,16 +81,16 @@ module Granite::Api
       when UUID.class, (UUID | Nil).class
         # Provide specific operators for UUIDs
         Granite::Api::UUID_OPERATORS.each do |op|
-          params << Open::Api::Parameter.new(name + "_#{op}", type, **args, description: "return results that are #{op} #{name}")
+          params << Open::Api::Parameter.new(name + "_#{op}", **args, type: type, description: "return results that are #{op} #{name}")
         end
       else
         Granite::Api::STRING_OPERATORS.each do |op|
-          params << Open::Api::Parameter.new(name + "_#{op}", type, **args, description: "return results that are #{op} #{name}")
+          params << Open::Api::Parameter.new(name + "_#{op}", **args, type: type, description: "return results that are #{op} #{name}")
         end
       end
     when "integer"
       Granite::Api::NUM_OPERATORS.each do |op|
-        params << Open::Api::Parameter.new(name + "_#{op}", type, **args, description: "return results that are #{op} #{name}")
+        params << Open::Api::Parameter.new(name + "_#{op}", **args, type: type, description: "return results that are #{op} #{name}")
       end
     end
     params
