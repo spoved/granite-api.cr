@@ -70,10 +70,13 @@ module Granite::Api
           {% is_json = var.annotation(Granite::Api::Formatter) && var.annotation(Granite::Api::Formatter)[:type] == :json %}
           {% if is_json %}{% json_check[var.id] = is_json %}{% end %}
 
-
           {% if is_json %}
             # If its a json field, skip adding it to collumn params.
-            %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("object")
+            %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("object").tap do |schema|
+              {% if var.annotation(Granite::Api::Formatter)[:klass] && var.annotation(Granite::Api::Formatter)[:klass].resolve <= Hash %}
+              schema.additional_properties = Open::Api::Schema.new("string")
+              {% end %}
+            end
           {% else %}
             %model_def.collumn_params << Granite::Api::CollParamDef.new(
               name: "{{var.id}}",
@@ -138,8 +141,10 @@ module Granite::Api
             query.where(filter[:name], filter[:op], {{id_class}}.new(filter[:value].as(String)))
           {% for column in columns %}
           when "{{column.id}}"
+            {% if json_check[column.id] %}
+            next
             # Check if the column is an UUID
-            {% if column.type.union_types.first <= UUID %}
+            {% elsif column.type.union_types.first <= UUID %}
             query.where(filter[:name], filter[:op], UUID.new(filter[:value].as(String)))
             {% else %}
             query.where(filter[:name], filter[:op], filter[:value])
@@ -158,8 +163,10 @@ module Granite::Api
           {% for column in columns %}
           when "{{column.id}}"
             Log.trace { "patching attr {{column.id}}" }
-            {% if column.annotation(Granite::Api::Formatter) && column.annotation(Granite::Api::Formatter)[:type] == :json %}
-            item.{{column.id}} =  param[:value].to_json
+            {% if json_check[column.id] %}
+            next
+            {% elsif column.annotation(Granite::Api::Formatter) && column.annotation(Granite::Api::Formatter)[:type] == :json %}
+            item.{{column.id}} = param[:value]
             {% elsif enum_check[column.id] %}
             item.{{column.id}} =  {{column.type.union_types.first}}.parse(param[:value].as(String))
             {% elsif column.type.union_types.first <= UUID %}
