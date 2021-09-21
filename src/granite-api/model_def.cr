@@ -13,10 +13,10 @@ module Granite::Api
     property patch_item : Proc(T, Array(ParamFilter), Nil) = ->(item : T, filters : Array(Granite::Api::ParamFilter)) {}
 
     def initialize(@name, @path)
+      {% begin %}
       {% model = @type.type_vars.first %}
       @resp_list_object_name, @resp_list_object = Granite::Api.create_list_schemas(@name)
-
-      populate_model_def({{@type.type_vars.first.id}}, self)
+      populate_model_def({{model.id}}, self)
 
       @collumn_params.select { |c| c.name != "created_at" && c.name != "created_at" }.map(&.coll_param).each do |param|
         @body_params << Open::Api::Parameter.new(
@@ -26,6 +26,7 @@ module Granite::Api
           schema: param.schema
         )
       end
+      {% end %}
     end
 
     def coll_names : Array(String)
@@ -65,18 +66,26 @@ module Granite::Api
 
       {% for var in model.instance_vars %}
         {% if var.annotation(Granite::Column) %}
-          {% is_enum = var.type.union_types.first < Enum %}
+          {% var_type = var.type.union_types.reject(&.==(Nil)).first %}
+          {% is_enum = var_type < Enum %}
           {% if is_enum %}{% enum_check[var.id] = is_enum %}{% end %}
           {% is_json = var.annotation(Granite::Api::Formatter) && var.annotation(Granite::Api::Formatter)[:type] == :json %}
           {% if is_json %}{% json_check[var.id] = is_json %}{% end %}
 
           {% if is_json %}
+            %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("object")
             # If its a json field, skip adding it to collumn params.
-            %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("object").tap do |schema|
-              {% if var.annotation(Granite::Api::Formatter)[:klass] && var.annotation(Granite::Api::Formatter)[:klass].resolve <= Hash %}
-              schema.additional_properties = Open::Api::Schema.new("string")
-              {% end %}
-            end
+            {% if var_type <= Hash %}
+              {% vvar = var_type.type_vars.last.union_types.reject(&.==(Nil)) %}
+              %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("object").tap do |schema|
+                schema.additional_properties = Open::Api::Schema.from_type({{var_type.id}})
+              end
+            {% elsif var_type <= Array %}
+              {% vvar = var_type.type_vars.first.union_types.reject(&.==(Nil)) %}
+              %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("array").tap do |schema|
+                schema.items = Open::Api::Schema.from_type({{var_type.id}})
+              end
+            {% end %}
           {% else %}
             %model_def.collumn_params << Granite::Api::CollParamDef.new(
               name: "{{var.id}}",
