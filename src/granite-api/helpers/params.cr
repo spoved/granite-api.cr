@@ -13,15 +13,30 @@ module Granite::Api
   end
 
   def param_args(env, filter_params : Array(Open::Api::Parameter)) : Array(ParamFilter)
-    result = Array(ParamFilter).new
-
+    filters = Array(ParamFilter).new
     filter_params.each do |param|
       val = param_filter(param, env)
       unless val.nil?
-        result << val
+        filters << val
       end
     end
-    result
+
+    val = env.params.query["filters"]?.nil? ? nil : env.params.query["filters"]
+    unless val.nil?
+      begin
+        JSON.parse(val).as_a.each do |filter|
+          name = filter["name"].as_s
+          filters << {
+            name:  name,
+            op:    string_to_operator(filter["op"].as_s),
+            value: filter["value"].as_s,
+          }
+        end
+      rescue ex
+      end
+    end
+
+    filters
   end
 
   # Convert the `Open::Api::Parameter` to a filter struct
@@ -75,24 +90,6 @@ module Granite::Api
   def filter_params_for_var(name, type, **args) : Array(Open::Api::Parameter)
     params = [] of Open::Api::Parameter
     params << Open::Api::Parameter.new(name, **args, type: type, description: "return results that match #{name}")
-    case Open::Api.get_open_api_type(type)
-    when "string"
-      case type
-      when UUID.class, (UUID | Nil).class
-        # Provide specific operators for UUIDs
-        Granite::Api::UUID_OPERATORS.each do |op|
-          params << Open::Api::Parameter.new(name + "_#{op}", **args, type: type, description: "return results that are #{op} #{name}")
-        end
-      else
-        Granite::Api::STRING_OPERATORS.each do |op|
-          params << Open::Api::Parameter.new(name + "_#{op}", **args, type: type, description: "return results that are #{op} #{name}")
-        end
-      end
-    when "integer"
-      Granite::Api::NUM_OPERATORS.each do |op|
-        params << Open::Api::Parameter.new(name + "_#{op}", **args, type: type, description: "return results that are #{op} #{name}")
-      end
-    end
     params
   end
 end

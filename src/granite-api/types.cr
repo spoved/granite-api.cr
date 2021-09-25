@@ -13,5 +13,5 @@ module Granite::Api
     type : PropertyTypes,
     default_value : Int32 | Int64 | Float32 | Float64 | Nil | UUID | Bool | String
 
-  alias ParamFilter = NamedTuple(name: String, op: Symbol, value: Bool | Float64 | Int64 | String | Array(String))
+  alias ParamFilter = NamedTuple(name: String, op: Symbol, value: Bool | Float64 | Int32 | Int64 | String | Array(String))
 end

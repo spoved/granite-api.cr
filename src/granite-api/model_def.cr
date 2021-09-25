@@ -73,19 +73,8 @@ module Granite::Api
           {% if is_json %}{% json_check[var.id] = is_json %}{% end %}
 
           {% if is_json %}
-            %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("object")
-            # If its a json field, skip adding it to collumn params.
-            {% if var_type <= Hash %}
-              {% vvar = var_type.type_vars.last.union_types.reject(&.==(Nil)) %}
-              %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("object").tap do |schema|
-                schema.additional_properties = Open::Api::Schema.from_type({{var_type.id}})
-              end
-            {% elsif var_type <= Array %}
-              {% vvar = var_type.type_vars.first.union_types.reject(&.==(Nil)) %}
-              %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.new("array").tap do |schema|
-                schema.items = Open::Api::Schema.from_type({{var_type.id}})
-              end
-            {% end %}
+            %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.from_type({{var_type.id}})
+
           {% else %}
             %model_def.collumn_params << Granite::Api::CollParamDef.new(
               name: "{{var.id}}",

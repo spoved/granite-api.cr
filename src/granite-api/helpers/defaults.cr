@@ -1,6 +1,4 @@
 module Granite::Api
-  record FilterObj, name : String, op : String, value : String
-
   private def default_routes
     get "/api/v1/swagger.json" do |env|
       env.response.content_type = "application/json"
@@ -51,7 +49,7 @@ module Granite::Api
     ))
 
     # FIXME: enable and move filters to this method
-    OPEN_API.register_schema("filter_obj", Open::Api::Schema.from_type(Granite::Api::FilterObj))
+    OPEN_API.register_schema("filter_obj", Open::Api::Schema.from_type(Granite::Api::ParamFilter))
   end
 
   private def register_default_parameters
