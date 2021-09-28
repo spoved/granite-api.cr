@@ -14,4 +14,14 @@ module Granite::Api
     default_value : Int32 | Int64 | Float32 | Float64 | Nil | UUID | Bool | String
 
   alias ParamFilter = NamedTuple(name: String, op: Symbol, value: Bool | Float64 | Int32 | Int64 | String | Array(String))
+
+  struct ListResp(T)
+    include JSON::Serializable
+
+    property limit : Int32
+    property offset : Int32
+    property size : Int32
+    property total : Int32
+    property items : Array(T)
+  end
 end
