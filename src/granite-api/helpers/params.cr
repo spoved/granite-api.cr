@@ -24,15 +24,16 @@ module Granite::Api
     val = env.params.query["filters"]?.nil? ? nil : env.params.query["filters"]
     unless val.nil?
       begin
-        JSON.parse(val).as_a.each do |filter|
-          name = filter["name"].as_s
+        Array(NamedTuple(name: String, op: String, value: Bool | Float64 | Int32 | Int64 | String | Array(String)))
+          .from_json(val).each do |filter|
           filters << {
-            name:  name,
-            op:    string_to_operator(filter["op"].as_s),
-            value: filter["value"].as_s,
+            name:  filter[:name],
+            op:    string_to_operator(filter[:op]),
+            value: filter[:value],
           }
         end
       rescue ex
+        Log.error(exception: ex) { ex.message }
       end
     end
 
