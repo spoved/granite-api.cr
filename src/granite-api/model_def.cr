@@ -134,16 +134,25 @@ module Granite::Api
 
       %model_def.apply_filters = ->(filters : Array(Granite::Api::ParamFilter), query : Granite::Query::Builder({{model.id}})){
         filters.each do |filter|
+          Log.debug {"processing filter: #{filter.inspect}"}
           case filter[:name]
           when "{{primary_key.id}}"
-            query.where(filter[:name], filter[:op], {{id_class}}.new(filter[:value].as(String)))
+            if filter[:value].is_a?(Array(String))
+              query.where(filter[:name], filter[:op], filter[:value].as(Array(String)).map {|v| {{id_class}}.new(v.as(String))} )
+            else
+              query.where(filter[:name], filter[:op], {{id_class}}.new(filter[:value].as(String)))
+            end
           {% for column in columns %}
           when "{{column.id}}"
             {% if json_check[column.id] %}
             next
             # Check if the column is an UUID
             {% elsif column.type.union_types.first <= UUID %}
-            query.where(filter[:name], filter[:op], UUID.new(filter[:value].as(String)))
+            if filter[:value].is_a?(Array(String))
+              query.where(filter[:name], filter[:op], filter[:value].as(Array(String)).map {|v| UUID.new(v.as(String))} )
+            else
+              query.where(filter[:name], filter[:op], UUID.new(filter[:value].as(String)))
+            end
             {% else %}
             query.where(filter[:name], filter[:op], filter[:value])
             {% end %}
