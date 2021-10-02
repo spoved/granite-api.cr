@@ -153,8 +153,18 @@ module Granite::Api
             else
               query.where(filter[:name], filter[:op], UUID.new(filter[:value].as(String)))
             end
+            {% elsif enum_check[column.id] %}
+              if filter[:value].is_a?(Array(String))
+                query.where(
+                  filter[:name],
+                  filter[:op],
+                  filter[:value].as(Array(String)).map { |v| {{column.type.union_types.first}}.parse(v).to_s }
+                )
+              else
+                query.where(filter[:name], filter[:op], {{column.type.union_types.first}}.parse(filter[:value].as(String)).to_s)
+              end
             {% else %}
-            query.where(filter[:name], filter[:op], filter[:value])
+              query.where(filter[:name], filter[:op], filter[:value])
             {% end %}
           {% end %}
           end
