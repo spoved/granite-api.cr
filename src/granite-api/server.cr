@@ -60,7 +60,7 @@ module Granite::Api
       # puts %open_api_path
     end
 
-    if %op_item.nil? && %summary.is_a?(String) && %schema.is_a?(Open::Api::Schema)
+    if %op_item.nil? && %summary.is_a?(String) && %schema.is_a?(Open::Api::SchemaRef)
       %op_item = Open::Api::OperationItem.new(%summary).tap do |op|
         op.responses = Open::Api::OperationItem::Responses{
           "200" => Open::Api::Response.new(%summary).tap do |resp|
