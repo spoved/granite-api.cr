@@ -12,11 +12,7 @@ module Granite::Api
 
     Granite::Api.register_route("OPTIONS", "/*",
       summary: "CORS Options Return",
-      schema: Open::Api::Schema.new("object",
-        required: ["msg"],
-        properties: Hash(String, Open::Api::SchemaRef){
-          "msg" => Open::Api::Schema.new("string"),
-        })
+      schema: Granite::Api.open_api.schema_ref("cors_options_return"),
     )
     options "/*" do
       # TODO: what should OPTIONS requests actually respond with?
@@ -25,13 +21,7 @@ module Granite::Api
 
     Granite::Api.register_route("GET", "/healthz",
       summary: "get health",
-      schema: Open::Api::Schema.new(
-        "object",
-        required: ["status"],
-        properties: Hash(String, Open::Api::SchemaRef){
-          "status" => Open::Api::Schema.new("string"),
-        }
-      )
+      schema: Granite::Api.open_api.schema_ref("health_resp")
     )
     get "/healthz" do |env|
       env.response.content_type = "application/json"
@@ -47,6 +37,21 @@ module Granite::Api
         "message" => Open::Api::Schema.new("string"),
       },
     ))
+
+    OPEN_API.register_schema("health_resp", Open::Api::Schema.new(
+      "object",
+      required: ["status"],
+      properties: Hash(String, Open::Api::SchemaRef){
+        "status" => Open::Api::Schema.new("string"),
+      }
+    ))
+
+    OPEN_API.register_schema("cors_options_return", Open::Api::Schema.new("object",
+      required: ["msg"],
+      properties: Hash(String, Open::Api::SchemaRef){
+        "msg" => Open::Api::Schema.new("string"),
+      })
+    )
 
     # FIXME: enable and move filters to this method
     OPEN_API.register_schema("filter_obj", Open::Api::Schema.from_type(Granite::Api::ParamFilter))

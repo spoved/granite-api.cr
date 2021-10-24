@@ -101,7 +101,7 @@ module Granite::Api
   end
 
   # Create a new create `Open::Api::OperationItem` for a model
-  def create_put_op_item(model_name, model_ref, body_schema : Open::Api::Schema,
+  def create_put_op_item(model_name, model_ref, body_schema : Open::Api::SchemaRef,
                          security : Array(Open::Api::Security::Requirement)? = nil) : Open::Api::OperationItem
     Open::Api::OperationItem.new(
       summary: "Create new #{model_name} record",

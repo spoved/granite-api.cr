@@ -30,6 +30,9 @@ module Granite::Api
     %open_api.register_schema(%resp_list_object_name, %resp_list_object) unless %open_api.has_schema_ref?(%resp_list_object_name)
     %patch_body_params = %model_def.body_params
     %patch_body_object = Granite::Api.create_patch_body_schemas(%model_def)
+    %open_api.register_schema("#{%model_def.name}_patch_body", %patch_body_object)
+    %open_api.register_schema("#{%model_def.name}_body", Granite::Api.body_schema({{model.id}}))
+
 
     ###### GET List ######
 
@@ -154,13 +157,14 @@ module Granite::Api
       end
 
 
+
       ###### POST/PUT ######
       Granite::Api.register_route("PUT", "/api/#{%api_version}/#{%path}", {{model.id}})
       %open_api.add_path("/api/#{%api_version}/#{%path}", Open::Api::Operation::Put,
         item: Granite::Api.create_put_op_item(
           model_name: %model_def.name,
           model_ref: %open_api.schema_ref(%model_def.name),
-          body_schema: Granite::Api.body_schema({{model.id}}),
+          body_schema: %open_api.schema_ref("#{%model_def.name}_body"),
           security: %security,
         )
       )
@@ -196,7 +200,7 @@ module Granite::Api
           params: [
             %path_id_param
           ],
-          body_object: %patch_body_object,
+          body_object: %open_api.schema_ref("#{%model_def.name}_patch_body"),
           model_ref: %open_api.schema_ref(%model_def.name),
           security: %security,
         )
