@@ -135,6 +135,15 @@ module Granite::Api
       %model_def.apply_filters = ->(filters : Array(Granite::Api::ParamFilter), query : Granite::Query::Builder({{model.id}})){
         filters.each do |filter|
           Log.debug {"processing filter: #{filter.inspect}"}
+
+          if (filter[:op] == :in || filter[:op] == :nin) && filter[:value].is_a?(Array)
+            if filter[:value].as(Array).empty?
+              raise "empty value for filter: #{filter}"
+              next
+            end
+          end
+
+
           case filter[:name]
           when "{{primary_key.id}}"
             if filter[:value].is_a?(Array(String))
