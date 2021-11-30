@@ -195,6 +195,8 @@ module Granite::Api
             item.{{column.id}} = param[:value]
             {% elsif enum_check[column.id] %}
             item.{{column.id}} =  {{column.type.union_types.first}}.parse(param[:value].as(String))
+            {% elsif column.type.union_types.first <= Time %}
+            item.{{column.id}} = Time::Format::ISO_8601_DATE_TIME.parse(param[:value].as(String))
             {% elsif column.type.union_types.first <= UUID %}
             item.{{column.id}} = UUID.new(param[:value].as(String))
             {% elsif column.type.union_types.first <= Int32 %}

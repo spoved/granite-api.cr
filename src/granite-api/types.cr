@@ -1,8 +1,8 @@
 module Granite::Api
   # :nodoc:
-  alias PropertyTypes = Int32.class | Int64.class | Float32.class | Float64.class | Nil.class | UUID.class | Bool.class | String.class |
+  alias PropertyTypes = Int32.class | Int64.class | Float32.class | Float64.class | Nil.class | UUID.class | Bool.class | String.class | Time.class |
                         (Int32 | Nil).class | (Int64 | Nil).class | (Float32 | Nil).class | (Float64 | Nil).class | (UUID | Nil).class |
-                        (Bool | Nil).class | (String | Nil).class | (JSON::Any | Nil).class
+                        (Bool | Nil).class | (String | Nil).class | (JSON::Any | Nil).class | (Time | Nil).class
 
   # :nodoc:
   record CollParamDef,
