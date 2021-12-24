@@ -143,7 +143,6 @@ module Granite::Api
             end
           end
 
-
           case filter[:name]
           when "{{primary_key.id}}"
             if filter[:value].is_a?(Array(String))

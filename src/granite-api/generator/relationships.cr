@@ -1,6 +1,6 @@
 module Granite::Api
   # Define relationship routes for provided model
-  macro define_relationships(_model, model_def, meth_name, target_model_def, rel_type, rel_target, foreign_key,
+  macro define_relationships(_model, model_def, meth_name, target_model_def, rel_type, rel_target, foreign_key, primary_key, through,
                              path_id_param, api_version = "v1", id_class = UUID, security = nil)
     {% model = _model.resolve %}
     %model_def = {{model_def}}
@@ -10,6 +10,7 @@ module Granite::Api
     %open_api = %model_def.open_api
     %path_id_param = {{path_id_param}}
     %security = {{security}}
+    %through = {{through.nil? ? nil : through.stringify}}
 
     Granite::Api.register_schema({{rel_target}}, %target_model_def)
 
@@ -59,8 +60,10 @@ module Granite::Api
           operation_id: "get_#{%model_def.name}_#{%target_model_def.name}_list",
           model_name: %model_def.name,
           params: [
+            {% unless through %}
             Granite::Api.list_req_params,
             %target_model_def.coll_filter_params,
+            {% end %}
             %path_id_param,
           ].flatten,
           resp_ref: %open_api.schema_ref(%resp_list_object_name),
@@ -77,20 +80,33 @@ module Granite::Api
         order_by = Granite::Api.order_by_args(env)
         id = env.params.url[%model_def.primary_key]
         filters = Granite::Api.param_args(env, %target_model_def.coll_filter_params)
-        query = {{rel_target}}.where({{foreign_key.id}}: {{id_class}}.new(id))
 
-        # If sort is not specified, sort by provided column
-        %target_model_def.order_by.call(order_by, query)
+        {% if through %}
+          owner = {{_model.id}}.find({{id_class}}.new(id))
+          if owner.nil?
+            Granite::Api.not_found_resp(env, "{{_model.id}} with id: #{id} not found")
+            next
+          end
 
-        # If filters are specified, apply them
-        %target_model_def.apply_filters.call(filters, query)
+          items = owner.{{meth_name}}.all
+          resp = { limit:  0, offset: 0, size:   items.size, total:  items.size, items:  items }
+          Granite::Api.set_content_length(resp.to_json, env)
+        {% else %}
+          query = {{rel_target}}.where({{foreign_key.id}}: {{id_class}}.new(id))
 
-        total = query.size.run
-        query.offset(offset) if offset > 0
-        query.limit(limit) if limit > 0
-        items = query.select
-        resp = { limit:  limit, offset: offset, size:   items.size, total:  total, items:  items }
-        Granite::Api.set_content_length(resp.to_json, env)
+          # If sort is not specified, sort by provided column
+          %target_model_def.order_by.call(order_by, query)
+
+          # If filters are specified, apply them
+          %target_model_def.apply_filters.call(filters, query)
+
+          total = query.size.run
+          query.offset(offset) if offset > 0
+          query.limit(limit) if limit > 0
+          items = query.select
+          resp = { limit:  limit, offset: offset, size:   items.size, total:  total, items:  items }
+          Granite::Api.set_content_length(resp.to_json, env)
+        {% end %}
       rescue ex : Granite::Api::Auth::Unauthorized
         Granite::Api::Auth.unauthorized_resp(env, ex.message)
       rescue ex : Granite::Api::Auth::Unauthenticated

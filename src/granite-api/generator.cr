@@ -247,7 +247,7 @@ module Granite::Api
           Granite::Api::ModelDef({{anno[:target]}}).new(
             %target_object_name, "#{%path}/{#{%model_def.primary_key}}/#{%target_object_name}"
           ),
-          {{anno[:type]}}, {{anno[:target]}}, :{{anno[:foreign_key]}},
+          {{anno[:type]}}, {{anno[:target]}}, :{{anno[:foreign_key]}}, {{anno[:primary_key]}}, {{anno[:through]}},
           %path_id_param, %api_version, {{id_class}}, %security)
       {% end %}
     {% end %}
