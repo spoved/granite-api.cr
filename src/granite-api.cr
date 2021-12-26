@@ -15,6 +15,7 @@ module Granite::Api
 
   annotation Formatter; end
   annotation ReadOnly; end
+  annotation CacheControl; end
 
   ROUTES   = Array(Array(String)).new
   OPEN_API = Open::Api.new

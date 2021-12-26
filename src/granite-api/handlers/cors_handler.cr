@@ -15,6 +15,8 @@ class Granite::Api::CorsHandler < Kemal::Handler
     env.response.headers.add "Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Cache-Control, Pragma, Expires, X-CSRF-Token"
     env.response.headers.add "Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, PATCH"
     env.response.headers.add "Access-Control-Allow-Origin", "*"
+    env.response.headers.add "Access-Control-Max-Age", "7200"
+    env.response.headers.add "Cache-Control", "public, max-age=7200"
   end
 
   def process_cors(env)

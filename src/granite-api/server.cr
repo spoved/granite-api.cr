@@ -92,6 +92,8 @@ module Granite::Api
 
     if %op_item.is_a?(Open::Api::OperationItem)
       Granite::Api.open_api.add_path(%open_api_path, Open::Api::Operation.parse({{typ}}), %op_item)
+    else
+      # Log.error { "Invalid route: " + {{path}} }
     end
   end
 end

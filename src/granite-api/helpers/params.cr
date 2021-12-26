@@ -32,8 +32,11 @@ module Granite::Api
             value: filter[:value],
           }
         end
+      rescue ex : JSON::ParseException
+        raise "invalid filter"
       rescue ex
         Log.error(exception: ex) { ex.message }
+        raise ex
       end
     end
 

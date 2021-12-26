@@ -15,6 +15,12 @@ module Granite::Api
     {% end %}
     {% id_class = primary_key.type.union_types.first %}
 
+    %extra_headers = HTTP::Headers.new
+    {% if model.annotation(Granite::Api::CacheControl) %}
+      {% cache_anno = model.annotation(Granite::Api::CacheControl) %}
+      %extra_headers["Cache-Control"] = {{cache_anno.named_args.map { |k, v| "#{k.gsub(/_/, "-")}=#{v}" } + cache_anno.args.map(&.gsub(/_/, "-"))}}.map(&.to_s).join(", ")
+    {% end %}
+
     %api_version = "v{{api_version}}"
     %model_name = Granite::Api._api_model_name({{model.id}})
     %path : String = {% if path %} {{path}} {% else %} %model_name {% end %}
@@ -66,11 +72,17 @@ module Granite::Api
       # If filters are specified, apply them
       %model_def.apply_filters.call(filters, query)
 
+
+
       total = query.size.run
       query.offset(offset) if offset > 0
       query.limit(limit) if limit > 0
       items = query.select
       resp = { limit:  limit, offset: offset, size: items.size, total:  total, items:  items }
+      # If theres extra headers, add them
+      %extra_headers.each do |k, v|
+        env.response.headers[k] = v
+      end
       Granite::Api.set_content_length(resp.to_json, env)
     rescue ex : Granite::Api::Auth::Unauthorized
       Log.error {ex.message}
@@ -111,6 +123,10 @@ module Granite::Api
       if item.nil?
         Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
       else
+        # If theres extra headers, add them
+        %extra_headers.each do |k, v|
+          env.response.headers[k] = v
+        end
         Granite::Api.set_content_length(item.to_json, env)
       end
     rescue ex : Granite::Api::Auth::Unauthorized
