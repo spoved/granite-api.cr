@@ -95,7 +95,7 @@ module Granite::Api
           query = {{rel_target}}.where({{foreign_key.id}}: {{id_class}}.new(id))
 
           # If sort is not specified, sort by provided column
-          %target_model_def.order_by.call(order_by, query)
+          query.order(order_by) unless order_by.empty?
 
           # If filters are specified, apply them
           %target_model_def.apply_filters.call(filters, query)
@@ -104,7 +104,7 @@ module Granite::Api
           query.offset(offset) if offset > 0
           query.limit(limit) if limit > 0
           items = query.select
-          resp = { limit:  limit, offset: offset, size:   items.size, total:  total, items:  items }
+          resp = { limit: limit, offset: offset, size: items.size, total: total, items:  items }
           Granite::Api.set_content_length(resp.to_json, env)
         {% end %}
       rescue ex : Granite::Api::Auth::Unauthorized

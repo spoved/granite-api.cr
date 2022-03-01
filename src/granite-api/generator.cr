@@ -67,18 +67,16 @@ module Granite::Api
       query = {{model.id}}.where
 
       # If sort is not specified, sort by provided column
-      %model_def.order_by.call(order_by, query)
+      query.order(order_by) unless order_by.empty?
 
       # If filters are specified, apply them
       %model_def.apply_filters.call(filters, query)
-
-
 
       total = query.size.run
       query.offset(offset) if offset > 0
       query.limit(limit) if limit > 0
       items = query.select
-      resp = { limit:  limit, offset: offset, size: items.size, total:  total, items:  items }
+      resp = { limit: limit, offset: offset, size: items.size, total: total, items: items }
       # If theres extra headers, add them
       %extra_headers.each do |k, v|
         env.response.headers[k] = v

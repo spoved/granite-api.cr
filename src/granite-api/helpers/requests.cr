@@ -20,6 +20,6 @@ module Granite::Api
     order_by.to_h do |item|
       parts = item.split(":")
       {parts.first, parts.last == "desc" ? :desc : :asc}
-    end
+    end.reject! { |k, _| k.empty? }
   end
 end

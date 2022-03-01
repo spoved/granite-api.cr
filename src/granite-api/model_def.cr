@@ -8,7 +8,6 @@ module Granite::Api
     getter body_params : Array(Open::Api::Parameter) = Array(Open::Api::Parameter).new
     getter resp_list_object_name : String
     getter resp_list_object : Open::Api::SchemaRef
-    property order_by : Proc(Hash(String, Symbol), Granite::Query::Builder(T), Nil) = ->(order_by : Hash(String, Symbol), query : Granite::Query::Builder(T)) {}
     property apply_filters : Proc(Array(Granite::Api::ParamFilter), Granite::Query::Builder(T), Nil) = ->(filters : Array(Granite::Api::ParamFilter), query : Granite::Query::Builder(T)) {}
     property patch_item : Proc(T, Array(ParamFilter), Nil) = ->(item : T, filters : Array(Granite::Api::ParamFilter)) {}
 
@@ -110,27 +109,6 @@ module Granite::Api
           {% end %}
         {% end %}
       {% end %}
-
-      %model_def.order_by = ->(order_by: Hash(String, Symbol),  query : Granite::Query::Builder({{model.id}})){
-        # FIXME: figure out a way to order by multiple columns
-
-        # orders = Array(Tuple(Symbol, Symbol)).new
-        order_by.each do |k, v|
-          case k
-          when "{{primary_key.id}}"
-            # orders << {:{{primary_key.id}}, v}
-            query.order({{primary_key.id}}: v)
-            break
-          {% for column in columns %}
-          when "{{column.id}}"
-            # orders << {:{{column.id}}, v}
-            query.order({{column.id}}: v)
-            break
-          {% end %}
-          end
-        end
-        # query.order(orders) unless orders.empty?
-      }
 
       %model_def.apply_filters = ->(filters : Array(Granite::Api::ParamFilter), query : Granite::Query::Builder({{model.id}})){
         filters.each do |filter|
