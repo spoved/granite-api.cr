@@ -1,6 +1,6 @@
 module Granite::Api
   def init_server(name : String? = nil, host : String? = nil, auth : Granite::Api::Auth? = nil)
-    open_api.info.title = "Mtg Helper API" if name
+    open_api.info.title = name if name
 
     if host
       open_api.servers << Open::Api::Server.new(host)
