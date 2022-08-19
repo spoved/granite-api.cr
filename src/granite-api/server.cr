@@ -41,6 +41,8 @@ module Granite::Api
       )
 
       model_def.open_api.register_schema(model_def.name, object)
+    else
+      Log.warn { "Schema already registered for: #{_model}" }
     end
   end
 

@@ -15,7 +15,7 @@ module Granite::Api
     Granite::Api.register_schema({{rel_target}}, %target_model_def)
 
     {% if rel_type == :has_one || rel_type == :belongs_to %}
-      %_path_ = "/api/#{%api_version}/#{%path}/{#{%model_def.primary_key}}/#{%target_model_def.name}"
+      %_path_ = "/api/#{%api_version}/#{%path}/{#{%model_def.primary_key}}/#{%target_model_def.path}"
       %open_api.add_path(%_path_, Open::Api::Operation::Get,
         item: Granite::Api.create_get_op_item(
           operation_id: "get_#{%model_def.name}_#{%target_model_def.name}",
@@ -27,7 +27,7 @@ module Granite::Api
           security: %security,
         )
       )
-      %_kemal_path = "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}/#{%target_model_def.name}"
+      %_kemal_path = "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}/#{%target_model_def.path}"
       Granite::Api.register_route("GET", %_kemal_path, {{model.id}})
       get %_kemal_path do |env|
         {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}
@@ -54,7 +54,7 @@ module Granite::Api
         %open_api.register_schema(%resp_list_object_name, %resp_list_object)
       end
 
-      %_path_ = "/api/#{%api_version}/#{%path}/{#{%model_def.primary_key}}/#{%target_model_def.name.pluralize}"
+      %_path_ = "/api/#{%api_version}/#{%path}/{#{%model_def.primary_key}}/#{%target_model_def.path.pluralize}"
       %open_api.add_path(%_path_, Open::Api::Operation::Get,
         item: Granite::Api.create_get_list_op_item(
           operation_id: "get_#{%model_def.name}_#{%target_model_def.name}_list",
@@ -71,7 +71,7 @@ module Granite::Api
         )
       )
 
-      %_kemal_path = "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}/#{%target_model_def.name.pluralize}"
+      %_kemal_path = "/api/#{%api_version}/#{%path}/:#{%model_def.primary_key}/#{%target_model_def.path.pluralize}"
       Granite::Api.register_route("GET", %_kemal_path, {{model.id}})
       get %_kemal_path do |env|
         {% if security %}Granite::Api::Auth.authorized?(env, %security){% end %}

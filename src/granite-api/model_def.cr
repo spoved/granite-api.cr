@@ -1,3 +1,5 @@
+require "./helpers"
+
 module Granite::Api
   # :nodoc:
   class ModelDef(T)
@@ -10,6 +12,24 @@ module Granite::Api
     getter resp_list_object : Open::Api::SchemaRef
     property apply_filters : Proc(Array(Granite::Api::ParamFilter), Granite::Query::Builder(T), Nil) = ->(filters : Array(Granite::Api::ParamFilter), query : Granite::Query::Builder(T)) {}
     property patch_item : Proc(T, Array(ParamFilter), Nil) = ->(item : T, filters : Array(Granite::Api::ParamFilter)) {}
+
+    def self.new
+      {% begin %}
+        {% model = @type.type_vars.first %}
+        {% anno = model.annotation(Granite::Api::Options) %}
+        {% if anno && anno[:model_name] %}
+        name = {{ anno[:model_name] }}
+        {% else %}
+        name = Granite::Api._api_model_name({{model.id}})
+        {% end %}
+        {% if anno && anno[:path] %}
+        path = {{ anno[:path] }}
+        {% else %}
+        path = Granite::Api._api_model_name({{model.id}})
+        {% end %}
+        self.new(name, path)
+      {% end %}
+    end
 
     def initialize(@name, @path)
       {% begin %}

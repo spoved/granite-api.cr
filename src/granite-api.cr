@@ -13,6 +13,13 @@ module Granite::Api
   spoved_logger
   extend self
 
+  # Annotation to override the default name and path generation for a class. Useful when classes share the same name but in different namespaces.
+  # ```
+  # @[Granite::Api::Options(model_name: "ns_example", path: "example")]
+  # class NS::ExampleClass < Granite::Base
+  # end
+  # ```
+  annotation Options; end
   annotation Formatter; end
   annotation ReadOnly; end
   annotation CacheControl; end
