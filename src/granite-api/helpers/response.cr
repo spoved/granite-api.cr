@@ -19,9 +19,17 @@ module Granite::Api
     halt {{env}}, status_code: 400, response: ({code: 400, message: {{msg}}}.to_json)
   end
 
-  def set_content_length(resp, env)
+  def set_content_length(resp, env, extra_headers : HTTP::Headers = HTTP::Headers.new)
     resp = "{}" if resp.nil?
     env.response.content_length = resp.bytesize
+
+    # If theres extra headers, add them
+    unless extra_headers.nil?
+      extra_headers.each do |k, v|
+        env.response.headers[k] = v
+      end
+    end
+
     resp
   end
 

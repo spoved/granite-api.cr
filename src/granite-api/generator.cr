@@ -75,11 +75,7 @@ module Granite::Api
       query.limit(limit) if limit > 0
       items = query.select
       resp = { limit: limit, offset: offset, size: items.size, total: total, items: items }
-      # If theres extra headers, add them
-      %extra_headers.each do |k, v|
-        env.response.headers[k] = v
-      end
-      Granite::Api.set_content_length(resp.to_json, env)
+      Granite::Api.set_content_length(resp.to_json, env, %extra_headers)
     rescue ex : Granite::Api::Auth::Unauthorized
       Log.error {ex.message}
       Granite::Api::Auth.unauthorized_resp(env, ex.message)
@@ -119,11 +115,7 @@ module Granite::Api
       if item.nil?
         Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
       else
-        # If theres extra headers, add them
-        %extra_headers.each do |k, v|
-          env.response.headers[k] = v
-        end
-        Granite::Api.set_content_length(item.to_json, env)
+        Granite::Api.set_content_length(item.to_json, env, %extra_headers)
       end
     rescue ex : Granite::Api::Auth::Unauthorized
       Granite::Api::Auth.unauthorized_resp(env, ex.message)

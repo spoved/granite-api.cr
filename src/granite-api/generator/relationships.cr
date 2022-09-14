@@ -11,6 +11,12 @@ module Granite::Api
     %path_id_param = {{path_id_param}}
     %security = {{security}}
     %through = {{through.nil? ? nil : through.stringify}}
+    %extra_headers = HTTP::Headers.new
+    {% if model.annotation(Granite::Api::CacheControl) %}
+      {% cache_anno = model.annotation(Granite::Api::CacheControl) %}
+      %extra_headers["Cache-Control"] = {{cache_anno.named_args.map { |k, v| "#{k.gsub(/_/, "-")}=#{v}" } + cache_anno.args.map(&.gsub(/_/, "-"))}}.map(&.to_s).join(", ")
+    {% end %}
+
 
     Granite::Api.register_schema({{rel_target}}, %target_model_def)
 
@@ -37,7 +43,7 @@ module Granite::Api
         if item.nil?
           Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
         else
-          Granite::Api.set_content_length(item.{{meth_name}}.to_json, env)
+          Granite::Api.set_content_length(item.{{meth_name}}.to_json, env, %extra_headers)
         end
       rescue ex : Granite::Api::Auth::Unauthorized
         Granite::Api::Auth.unauthorized_resp(env, ex.message)
@@ -90,7 +96,7 @@ module Granite::Api
 
           items = owner.{{meth_name}}.all
           resp = { limit:  0, offset: 0, size:   items.size, total:  items.size, items:  items }
-          Granite::Api.set_content_length(resp.to_json, env)
+          Granite::Api.set_content_length(resp.to_json, env, %extra_headers)
         {% else %}
           query = {{rel_target}}.where({{foreign_key.id}}: {{id_class}}.new(id))
 
@@ -105,7 +111,7 @@ module Granite::Api
           query.limit(limit) if limit > 0
           items = query.select
           resp = { limit: limit, offset: offset, size: items.size, total: total, items:  items }
-          Granite::Api.set_content_length(resp.to_json, env)
+          Granite::Api.set_content_length(resp.to_json, env, %extra_headers)
         {% end %}
       rescue ex : Granite::Api::Auth::Unauthorized
         Granite::Api::Auth.unauthorized_resp(env, ex.message)
