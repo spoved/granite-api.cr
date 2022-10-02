@@ -2,7 +2,7 @@ require "./generator/*"
 
 module Granite::Api
   # Generates CRUD routes for `Granite` models
-  macro crud_routes(_model, api_version = 1, security = nil, path = nil)
+  macro crud_routes(_model, api_version = 1, security = nil)
     {% model = _model.resolve.resolve %}
 
     {% if !(model < Granite::Base) %}
@@ -21,7 +21,7 @@ module Granite::Api
       %extra_headers["Cache-Control"] = {{cache_anno.named_args.map { |k, v| "#{k.gsub(/_/, "-")}=#{v}" } + cache_anno.args.map(&.gsub(/_/, "-"))}}.map(&.to_s).join(", ")
     {% end %}
 
-    %api_version = "v{{api_version}}"
+    %api_version = "v{{api_version.id}}"
     %open_api = Granite::Api.open_api
     %security = {{security}}
     %read_only = {{ !model.annotations(Granite::Api::ReadOnly).empty? }}

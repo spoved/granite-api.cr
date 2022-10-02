@@ -57,9 +57,17 @@ module Granite::Api
     %tags = {{tags}}
     %open_api_path = {{path}}
 
-    if %open_api_path =~ /\/:([\w\_]+)\//
-      %open_api_path = %open_api_path.gsub(/\/:([\w\_]+)\//, "/{#{$1}}/")
-      # puts %open_api_path
+    if %open_api_path =~ /\/:([\w\_]+)(\/|$)/
+      %open_api_path = %open_api_path.split("/").map do |x|
+        if x.starts_with?(':')
+          "{#{x.strip(':')}}"
+        else
+          x
+        end
+      end.join('/')
+
+      # %open_api_path = %open_api_path.gsub(/\/:([\w\_]+)(:?\/|$)/, "/{#{$1}}/").chomp('/')
+      puts %open_api_path
     end
 
     if %op_item.nil? && %summary.is_a?(String) && %schema.is_a?(Open::Api::SchemaRef)
