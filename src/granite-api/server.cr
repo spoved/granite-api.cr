@@ -67,7 +67,7 @@ module Granite::Api
       end.join('/')
 
       # %open_api_path = %open_api_path.gsub(/\/:([\w\_]+)(:?\/|$)/, "/{#{$1}}/").chomp('/')
-      puts %open_api_path
+      # puts %open_api_path
     end
 
     if %op_item.nil? && %summary.is_a?(String) && %schema.is_a?(Open::Api::SchemaRef)
