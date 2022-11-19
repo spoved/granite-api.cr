@@ -12,11 +12,6 @@ module Granite::Api
     %security = {{security}}
     %through = {{through.nil? ? nil : through.stringify}}
     %extra_headers = HTTP::Headers.new
-    {% if model.annotation(Granite::Api::CacheControl) %}
-      {% cache_anno = model.annotation(Granite::Api::CacheControl) %}
-      %extra_headers["Cache-Control"] = {{cache_anno.named_args.map { |k, v| "#{k.gsub(/_/, "-")}=#{v}" } + cache_anno.args.map(&.gsub(/_/, "-"))}}.map(&.to_s).join(", ")
-    {% end %}
-
 
     Granite::Api.register_schema({{rel_target}}, %target_model_def)
 
