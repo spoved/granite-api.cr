@@ -178,7 +178,7 @@ module Granite::Api
         env.response.content_type = "application/json"
 
         item = {{model}}.new
-        values = Granite::Api.param_args(env, %patch_body_params)
+        values = Granite::Api.param_body_values(env, %patch_body_params)
         %model_def.patch_item.call(item, values)
 
         if item.save
@@ -219,7 +219,7 @@ module Granite::Api
         if item.nil?
           Granite::Api.not_found_resp(env, "Record with id: #{id} not found")
         else
-          values = Granite::Api.param_args(env, %patch_body_params)
+          values = Granite::Api.param_body_values(env, %patch_body_params)
           %model_def.patch_item.call(item, values)
           if item.save
             Granite::Api.set_content_length(item.to_json, env)

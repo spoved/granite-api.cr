@@ -11,7 +11,7 @@ module Granite::Api
     getter resp_list_object_name : String
     getter resp_list_object : Open::Api::SchemaRef
     property apply_filters : Proc(Array(Granite::Api::ParamFilter), Granite::Query::Builder(T), Nil) = ->(filters : Array(Granite::Api::ParamFilter), query : Granite::Query::Builder(T)) {}
-    property patch_item : Proc(T, Array(ParamFilter), Nil) = ->(item : T, filters : Array(Granite::Api::ParamFilter)) {}
+    property patch_item : Proc(T, Array(ParamValues), Nil) = ->(item : T, filters : Array(ParamValues)) {}
 
     def self.new
       {% begin %}
@@ -93,6 +93,13 @@ module Granite::Api
 
           {% if is_json %}
             %model_def.properties[{{var.id.stringify}}] = Open::Api::Schema.from_type({{var_type.id}})
+
+            # Need to append this to body params
+            %model_def.body_params << Open::Api::Parameter.new(
+              name: "{{var.id}}",
+              parameter_in: "body",
+              schema: %model_def.properties[{{var.id.stringify}}],
+            )
 
           {% else %}
             %model_def.collumn_params << Granite::Api::CollParamDef.new(
@@ -177,7 +184,7 @@ module Granite::Api
         end
       }
 
-      %model_def.patch_item = ->(item : {{model.id}}, values : Array(Granite::Api::ParamFilter)){
+      %model_def.patch_item = ->(item : {{model.id}}, values : Array(ParamValues)){
         values.each do |param|
           case param[:name]
           when "{{primary_key.id}}"
@@ -186,10 +193,11 @@ module Granite::Api
           {% for column in columns %}
           when "{{column.id}}"
             Log.trace { "patching attr {{column.id}}" }
-            {% if json_check[column.id] %}
+
+            {% if column.annotation(Granite::Api::Formatter) && column.annotation(Granite::Api::Formatter)[:type] == :json %}
+              item.{{column.id}} = {{column.type.union_types.find { |t| t != Nil }}}.from_json(param[:value].to_json)
+            {% elsif json_check[column.id] %}
             next
-            {% elsif column.annotation(Granite::Api::Formatter) && column.annotation(Granite::Api::Formatter)[:type] == :json %}
-            item.{{column.id}} = param[:value]
             {% elsif enum_check[column.id] %}
             item.{{column.id}} =  {{column.type.union_types.first}}.parse(param[:value].as(String))
             {% elsif column.type.union_types.first <= Time %}

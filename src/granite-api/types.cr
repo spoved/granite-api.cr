@@ -4,6 +4,8 @@ module Granite::Api
                         (Int32 | Nil).class | (Int64 | Nil).class | (Float32 | Nil).class | (Float64 | Nil).class | (UUID | Nil).class |
                         (Bool | Nil).class | (String | Nil).class | (JSON::Any | Nil).class | (Time | Nil).class
 
+  alias ParamValues = NamedTuple(name: String, value: Array(JSON::Any) | Bool | Float64 | Hash(String, JSON::Any) | Int64 | String | Nil)
+
   # :nodoc:
   record CollParamDef,
     name : String,

@@ -43,6 +43,13 @@ module Granite::Api
     filters
   end
 
+  # Pull raw values from the env
+  def param_body_values(env, params) : Array(Granite::Api::ParamValues)
+    params.map do |param|
+      {name: param.name, value: Granite::Api.param_value(param, env)}
+    end.reject! { |v| v[:value].nil? }
+  end
+
   # Convert the `Open::Api::Parameter` to a filter struct
   private def param_filter(param : Open::Api::Parameter, env) : ParamFilter?
     param_name = param.name
