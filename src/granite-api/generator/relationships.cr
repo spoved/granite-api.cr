@@ -95,13 +95,14 @@ module Granite::Api
         {% else %}
           query = {{rel_target}}.where({{foreign_key.id}}: {{id_class}}.new(id))
 
-          # If sort is not specified, sort by provided column
-          query.order(order_by) unless order_by.empty?
-
           # If filters are specified, apply them
           %target_model_def.apply_filters.call(filters, query)
 
           total = query.size.run
+
+          # If sort is not specified, sort by provided column
+          query.order(order_by) unless order_by.empty?
+
           query.offset(offset) if offset > 0
           query.limit(limit) if limit > 0
           items = query.select
